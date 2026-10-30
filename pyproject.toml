@@ -1,0 +1,27 @@
+[project]
+name = "claude-companion"
+version = "0.1.0"
+description = "A dashboard for your Claude Code sessions: what is running, what it costs, and what needs you."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+push = ["pywebpush", "cryptography"]
+fcm = ["google-auth"]
+app = ["fastapi>=0.110", "uvicorn>=0.29"]
+test = ["pytest", "httpx", "playwright"]
+home_assistant = ["websockets>=12"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["claude_companion", "claude_companion.server", "claude_companion.mail", "claude_companion.money", "claude_companion.fitness", "claude_companion.hooks"]
+
+[tool.setuptools.package-data]
+"claude_companion.server" = ["static/*"]
+"claude_companion.mail" = ["prompts/*"]
+
+[project.scripts]
+claude-companion = "claude_companion.server:main"

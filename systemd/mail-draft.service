@@ -1,0 +1,8 @@
+[Unit]
+Description=claude-companion: draft replies to mail that wants one
+
+[Service]
+Type=oneshot
+# Assumes the repo is cloned at ~/claude-companion; edit this line if it is not.
+Environment=PATH=%h/.local/bin:%h/.npm-global/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=%h/claude-companion/bin/mail-draft.sh

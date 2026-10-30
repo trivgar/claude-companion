@@ -1,0 +1,31 @@
+"""Settings: CLAUDE_COMPANION_<KEY> in the environment first, then
+~/.config/claude-companion/config.toml. A file, not only the environment,
+because Claude Code's hooks import this outside the server's process."""
+from __future__ import annotations
+
+import os
+import tomllib
+from pathlib import Path
+
+
+def path() -> Path:
+    return Path(os.environ.get("CLAUDE_COMPANION_CONFIG",
+                               Path.home() / ".config" / "claude-companion" / "config.toml"))
+
+
+def get(key: str, default=None):
+    env = os.environ.get("CLAUDE_COMPANION_" + key.upper())
+    if env is not None:
+        return env
+    try:
+        return tomllib.loads(path().read_text()).get(key, default)
+    except (OSError, ValueError):
+        return default
+
+
+def paths(key: str) -> tuple[Path, ...]:
+    """A list in the file, or os.pathsep-separated in the environment."""
+    v = get(key) or ()
+    if isinstance(v, str):
+        v = v.split(os.pathsep)
+    return tuple(Path(p) for p in v if isinstance(p, str) and p)

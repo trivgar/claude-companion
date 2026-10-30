@@ -1,0 +1,12 @@
+{
+  "name": "Companion",
+  "short_name": "Companion",
+  "id": "/",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121623",
+  "theme_color": "#121623",
+  "icons": [
+    {"src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+  ]
+}

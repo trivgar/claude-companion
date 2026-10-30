@@ -1,0 +1,4 @@
+node_modules/
+capacitor.config.json
+android/app/app.properties
+android/app/google-services.json

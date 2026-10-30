@@ -1,0 +1,59 @@
+/* Two themes, both first-class: warm paper by day, dusk navy by night. No rule
+   in any feature hardcodes a colour; these tokens carry the whole difference.
+   --alert means "this needs you" and nothing else. */
+:root {
+  color-scheme: light dark;
+  --bg:#faf8f4; --raised:#fffefb; --sunk:#efece5; --line:#dedad0; --line-strong:#c3bdae;
+  --fg:#191b20; --dim:#5f6470; --faint:#676b78;
+  --alert:#b3401a; --busy:#2f7d4f; --accent:#191b20;
+  --sl:44%; --sc:0.13;
+}
+@media (prefers-color-scheme:dark) {
+  :root {
+    --bg:#121623; --raised:#1a2031; --sunk:#0c0f17; --line:#283048; --line-strong:#3b4562;
+    --fg:#e8e6e1; --dim:#9ba4ba; --faint:#8891ab;
+    --alert:#ff8a5c; --busy:#54c98a; --accent:#e8e6e1;
+    --sl:80%; --sc:0.085;
+  }
+}
+* { box-sizing:border-box }
+[hidden] { display:none !important }
+html { background:var(--bg) }
+body { margin:0; background:var(--bg); color:var(--fg);
+  font:15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line);
+  padding:10px 16px 0; }
+header h1 { font-size:1.05rem; margin:0 0 6px; }
+#strip { color:var(--dim); font-size:.8rem; min-height:1.2em; }
+#call { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+#call .call-btn { min-height:38px; padding:0 12px; border:1px solid var(--line-strong); border-radius:8px;
+  background:var(--raised); color:var(--fg); font:inherit; }
+#call .call-btn[aria-pressed="true"] { background:var(--busy); border-color:var(--busy); color:var(--bg); }
+#call .call-bar { flex:1 1 100%; margin:0 0 4px; padding:6px 8px; border:1px solid var(--line); border-radius:8px;
+  background:var(--raised); color:var(--dim); font-size:.8rem; }
+nav { display:flex; gap:4px; overflow-x:auto; padding:6px 0; scrollbar-width:none; }
+nav button { min-height:44px; padding:0 14px; border:1px solid var(--line); border-radius:8px;
+  background:var(--raised); color:var(--fg); font:inherit; white-space:nowrap; }
+nav button[aria-current="true"] { border-color:var(--fg); font-weight:600; }
+nav button .n { color:var(--alert); font-weight:700; margin-left:4px; }
+main { padding:12px 16px 80px; max-width:760px; margin:0 auto; }
+.card { background:var(--raised); border:1px solid var(--line); border-radius:8px; padding:12px; margin:0 0 10px; }
+.card h3 { margin:0 0 4px; font-size:1rem; }
+.dim { color:var(--dim); } .faint { color:var(--faint); font-size:.8rem; }
+.needs { color:var(--alert); font-weight:700; }
+button.act { min-height:44px; padding:0 16px; border-radius:8px; border:1px solid var(--line-strong);
+  background:var(--sunk); color:var(--fg); font:inherit; }
+button.act.primary { background:var(--fg); color:var(--bg); border-color:var(--fg); }
+textarea, input[type=text] { width:100%; font:inherit; color:var(--fg); background:var(--sunk);
+  border:1px solid var(--line); border-radius:8px; padding:10px; }
+.empty { color:var(--dim); padding:24px 0; }
+@media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important } }
+
+/* Connections: the state is a word and a weight first; colour only backs up "broken". */
+.conn .state { font-weight:500; font-size:.85rem; color:var(--dim); margin-left:6px; }
+.conn.broken .state { font-weight:700; color:var(--alert); }
+.conn.ok .state { font-weight:400; }
+.conn.off h3 { font-weight:600; }
+.conn .fix { margin:6px 0 0; padding-left:10px; border-left:3px solid var(--line-strong); overflow-wrap:anywhere; }
+.conn.broken .fix { border-left-color:var(--alert); }
+.conn p { overflow-wrap:anywhere; }

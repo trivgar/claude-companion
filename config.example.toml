@@ -1,0 +1,61 @@
+# ~/.config/claude-companion/config.toml
+# Every key is optional; CLAUDE_COMPANION_<KEY> in the environment wins.
+
+# The dashboard server
+server_port = 8770
+server_bind = "127.0.0.1"     # keep it on loopback; put `tailscale serve` in front for your phone
+
+# What the page calls you
+name = "you"
+
+# What your install is called: page title, home screen, the phone app
+app_name = "Companion"
+
+# Which features load, in nav order (leave out for all of them)
+# features = "sessions,asks,chat,mail,comms,voicelab,push"
+
+# Where your sessions live and where the app keeps its own files
+# claude_home = "~/.claude"
+# data_dir = "~/.local/share/claude-companion"
+
+# A stuck ask (unanswered this long, while you are awake) alerts once
+# ring_after_min = 30
+# ring_gap_min = 10
+# ring_day_max = 8
+
+# A top-level session at this many context tokens says "needs /clear".
+# clear_line = 400000
+
+# Notes between two people's Claudes on a shared repo (COLLAB.md)
+# collab_label = "for-alex"        # your label: notes filed for you
+# collab_from = "sam-github-login" # whose notes your sessions are shown (comma separated); empty shows none
+# collab_repo = "example/app"      # defaults to this repo's origin
+
+# Fitness tab (docs/fitness-sources.md)
+# fitness_source = "demo"            # "home_assistant" or "demo"; empty = no fitness source set up
+# units = "imperial"                 # or "metric" (default)
+# fitness_sleep_goal_min = 420
+# fitness_work_days = "mon,tue,wed,thu,fri"   # mornings you get up for work; leave out for no split
+# ha_url = "http://ha.example.com:8123"
+# ha_token_file = "~/.config/claude-companion/ha-token"   # a 600 file; never the token itself
+# fitness_sleep_entity = "sensor.example_sleep_minutes_asleep"
+# fitness_hr_entity = "sensor.example_resting_heart_rate"
+# fitness_steps_entity = "sensor.example_daily_steps"
+# fitness_distance_entity = "sensor.example_daily_distance"
+# fitness_weight_entity = "sensor.example_weight"
+
+# Your own plug-in module (optional): who else may use shared pages, what
+# happens when an ask is made or answered, whether you are asleep, and extra
+# private places. See CHANGES.md.
+# addons = "my_addons"
+
+# Projects never read aloud or sent to an outside voice service
+# private_projects = ["ledger"]
+
+# Spoken question and approval lines for your own cast, by speaker name.
+# {you} becomes `name`. Question lines are sentences; approval lines are
+# fragments the tool name is added to. Tables go last in this file.
+# [question_lines]
+# Alex = ["{you}, got a question.", "Question for you, {you}.", "{you}. Need an answer."]
+# [approval_lines]
+# Alex = ["{you}, need your OK"]

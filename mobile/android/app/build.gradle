@@ -1,0 +1,89 @@
+apply plugin: 'com.android.application'
+
+def appProps = new Properties()
+def appPropsFile = file('app.properties')
+if (appPropsFile.exists()) { appPropsFile.withInputStream { appProps.load(it) } }
+def appName = appProps.getProperty('appName', 'Companion')
+def appSlug = appName.toLowerCase(java.util.Locale.ROOT).replaceAll('[^a-z0-9]', '')
+def nativeName = appName.replaceAll('[^A-Za-z0-9]', '') + 'Native'
+
+android {
+    namespace "app.companion"
+    buildFeatures {
+        buildConfig = true    // CommsPlayerService reports BuildConfig.VERSION_NAME in each played answer
+    }
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId appProps.getProperty('applicationId', 'app.companion.app')
+        resValue "string", "app_name", appName
+        resValue "string", "app_slug", appSlug
+        resValue "string", "native_name", nativeName
+        resValue "string", "title_activity_main", appName
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        // mobile/build.sh passes the commit count, so each build installs over the last.
+        versionCode Integer.parseInt((project.findProperty("ccVersionCode") ?: "1").toString())
+        versionName((project.findProperty("ccVersionName") ?: "dev").toString())
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // Signed with a key that lives outside every repo (mobile/build.sh makes
+    // it once), so a new APK installs over the old one.
+    // mobile/build.sh hands over a private copy out of the vault; a plain Gradle
+    // run falls back to the old file while it exists (deleted from 2026-10-19).
+    def signing = System.getenv("COMPANION_SIGNING") ? new File(System.getenv("COMPANION_SIGNING"))
+        : new File(System.getProperty("user.home"), ".config/companion-app/signing.properties")
+    if (signing.exists()) {
+        def p = new Properties()
+        signing.withInputStream { p.load(it) }
+        signingConfigs {
+            companion {
+                storeFile file(p.storeFile)
+                storePassword p.storePassword
+                keyAlias p.keyAlias
+                keyPassword p.keyPassword
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (signing.exists()) signingConfig signingConfigs.companion
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    implementation "com.google.firebase:firebase-messaging:25.0.1"
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

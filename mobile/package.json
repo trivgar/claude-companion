@@ -1,0 +1,13 @@
+{
+  "name": "companion-app",
+  "private": true,
+  "description": "CompanionApp as an Android app: the live pages, plus comms woken by a push. See docs/superpowers/specs/2026-10-03-companion-android-app-design.md.",
+  "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.3.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.3.0"
+  }
+}

@@ -1,0 +1,11 @@
+[Unit]
+Description=Draft mail replies every hour
+
+[Timer]
+# Check any change with: systemd-analyze calendar '<spec>'
+OnCalendar=*-*-* *:00:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
