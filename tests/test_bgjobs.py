@@ -73,6 +73,11 @@ def test_redact_hides_underscored_names_flags_bearer_and_url_userinfo():
         "curl -uadmin:pw4 https://x.test": "pw4",
         "mysql -ppw5 db": "pw5",
         "tool --pass pw6": "pw6",
+        "curl --proxy-user u:pw7 https://x.test": "pw7",
+        "curl -su u:pw8 https://x.test": "pw8",
+        "curl https://x.test/?a=1&access_token=pw9": "pw9",
+        "curl https://x.test/?x=1&password=pw10": "pw10",
+        "run a=1,password=pw11": "pw11",
     }
     for command, secret in cases.items():
         assert secret not in bgjobs.redact(command), command

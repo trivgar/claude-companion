@@ -15,12 +15,14 @@ CMD_LIMIT = 96
 _SNAPSHOT = re.compile(r"(?:^|/)shell-snapshots/snapshot-[^\s/]+\.sh")
 _EVAL = re.compile(r"\beval\s+('(?:[^']|'\"'\"')*')", re.S)
 # A label keeps a command's words up to the first one that could carry a
-# credential, and drops everything from there: a name with a secret-ish word
-# in it (GH_TOKEN=, --api-token, password:), a credential short flag (-u, -p,
-# -H, attached or not), Bearer or Basic, or a URL with userinfo.
+# credential, and drops everything from there. Deliberately blunt, since a
+# status line loses little by cutting early: any word containing a
+# secret-ish fragment anywhere (GH_TOKEN=, --proxy-user, ?access_token=,
+# a,password=b), a single-dash bundle holding u, p or H (-su, -ppw), Bearer
+# or Basic, or a URL with userinfo.
 SCAN_LIMIT = 2048
-_SECRET_WORD = re.compile(r"token|api[_-]?key|key|passw|pass\b|pwd|secret|auth|credential|cookie", re.I)
-_SECRET_FLAG = re.compile(r"-[upH]|--(?:header|user|pass)", re.I)
+_SECRET_WORD = re.compile(r"token|key|pass|pwd|secret|auth|credential|cookie|user|session|sig", re.I)
+_SHORT_FLAG = re.compile(r"-[A-Za-z]*[upH]")
 
 
 def stat(proc: str, pid: int) -> tuple[int, int] | None:
@@ -68,12 +70,11 @@ def raw_command(command: list[str]) -> str:
 
 def _risky(word: str) -> bool:
     bare = word.strip("'\"")
-    if _SECRET_FLAG.match(bare) or bare.lower() in {"bearer", "basic"}:
+    if _SECRET_WORD.search(bare) or _SHORT_FLAG.match(bare):
         return True
-    if "://" in bare and "@" in bare.split("://", 1)[1].split("/", 1)[0]:
+    if bare.lower() in {"bearer", "basic"}:
         return True
-    name = re.split(r"[=:]", bare, 1)[0] if re.search(r"[=:]", bare) else bare if bare.startswith("-") else ""
-    return bool(name and _SECRET_WORD.search(name))
+    return "://" in bare and "@" in bare.split("://", 1)[1].split("/", 1)[0]
 
 
 def redact(value: str) -> str:
