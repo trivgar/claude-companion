@@ -53,6 +53,10 @@ jobs show their command and age, and stale orphan snapshot shells are reaped
 after a configurable delay. At the top, your 5-hour and 7-day spend and your
 real limits.
 
+**Restore.** A small local snapshot records each tmux-backed session every few
+minutes. After a reboot or crash, the Sessions tab lists missing sessions and
+can resume them in their old tmux names and folders.
+
 **Asks.** When a session wants permission to run something, or asks you a
 multiple-choice question, it shows up here with Allow and Deny. If the command
 was long and got shortened, the page makes you open the full text before it
@@ -165,6 +169,12 @@ corresponding feature is used:
 - `python -m claude_companion.collab install` is another optional hook setup.
   It adds its SessionStart hook to `~/.claude/settings.json` with a timestamped
   backup.
+- `python3 -m claude_companion.restore snapshot` writes
+  `restore-snapshot.json` in the app data directory. Its optional timer
+  installer writes `claude-companion-restore-snapshot.service` and
+  `claude-companion-restore-snapshot.timer` in the user systemd directory;
+  snapshots are private local state and a recent multi-session snapshot is
+  retained for up to four hours after every saved session disappears at once.
 
 The app's own asks, mail queue, clips, voices, paired-device hashes, and other
 state live in `~/.local/share/claude-companion/` and
@@ -337,6 +347,10 @@ hooks run outside any server's process.
 | `tts_dir` | Directory containing an executable speech coordinator `speak.sh`; optional and compatible with AgentVibes-style coordinators |
 | `job_reaper_after_min` | Age before an orphaned background snapshot shell is terminated; default 60 |
 | `job_reaper_every_min` | Reaper interval in minutes; default 10, and 0 turns it off |
+| `data_dir` | Directory for app state, including restore snapshots; default `~/.local/share/claude-companion` |
+| `restore_snapshot_interval_min` | Snapshot timer cadence in minutes, 1 through 60; default 5 |
+| `systemd_user_dir` | Where the restore timer installer writes user units; default `~/.config/systemd/user` |
+| `restore_python` | Python executable the restore timer runs; default is the Python that installed it |
 
 ### Helpers and background jobs
 
@@ -382,6 +396,9 @@ comms/install.sh --uninstall
 
 # Collaboration notes SessionStart hook, if installed
 .venv/bin/python -m claude_companion.collab uninstall
+
+# Restore snapshot user timer
+.venv/bin/python -m claude_companion.restore uninstall-timer
 ```
 
 Each command leaves existing timestamped `settings.json` backups in place for

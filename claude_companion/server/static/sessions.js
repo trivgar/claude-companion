@@ -19,6 +19,10 @@
     .scard .newbadge { color:var(--accent); border:1px solid var(--accent); border-radius:6px; padding:0 6px; font-size:.75rem; font-weight:700; }
     .sessions-seen-all { margin:0 0 10px; }
     .sessions-seen-all .faint { margin-left:8px; }
+    .restore-sessions { margin:0 0 12px; padding:10px; border:1px solid var(--accent); border-radius:8px; }
+    .restore-sessions p { margin:0 0 6px; }
+    .restore-sessions ul { margin:6px 0 0; padding-left:20px; }
+    .restore-sessions .action-result { margin-bottom:0; }
     .wbadge { color:var(--alert); border:1px solid var(--alert); border-radius:6px; padding:0 6px; font-size:.75rem; font-weight:700; }
     .clearbadge { color:var(--busy); border:1px solid var(--busy); border-radius:6px; padding:0 6px; font-size:.75rem; font-weight:700; }
     .cold { color:var(--alert); }
@@ -41,6 +45,9 @@
   let rowsOnPage = [];
   let sessionsEl = null;
   let seenAllError = '';
+  let restoreState = null;
+  let restoreBusy = false;
+  let restoreReports = [];
 
   const cardKey = r => `${String(r.pid || '')}:${String(r.session_id || '')}:${String(r.speaker || r.name || '')}`;
   const actionKey = (r, action) => `${action}:${cardKey(r)}`;
@@ -126,11 +133,22 @@
     </article>`;
   }
 
+  function restorePanel() {
+    const missing = restoreState && restoreState.ok ? (restoreState.sessions || []).filter(r => !r.running && !r.gone) : [];
+    if (!missing.length && !restoreReports.length) return '';
+    const reports = restoreReports.length ? `<ul class="action-result" role="status">${restoreReports.map(r =>
+      `<li>${esc(r.tmux)}: ${esc(r.detail || (r.ok ? 'started' : 'not restored'))}</li>`).join('')}</ul>` : '';
+    const button = missing.length ? `<p><button type="button" class="act" data-restore-sessions${restoreBusy ? ' disabled' : ''}>${esc(restoreBusy ? 'Restoring sessions...' : `Restore ${missing.length} sessions`)}</button></p>` : '';
+    const listed = missing.length ? `<ul>${missing.map(r =>
+      `<li>${esc(r.tmux)}${r.model ? ` (${esc(short(r.model))})` : ''}</li>`).join('')}</ul>` : '';
+    return `<section class="restore-sessions">${button}${listed}${reports}</section>`;
+  }
+
   function renderCards() {
     if (!sessionsEl) return;
     const seenAll = rowsOnPage.some(isUnread);
     const control = seenAll ? `<p class="sessions-seen-all"><button type="button" class="act" data-seen-all>Seen all</button>${seenAllError ? `<span class="faint" role="status">${esc(seenAllError)}</span>` : ''}</p>` : '';
-    sessionsEl.innerHTML = rowsOnPage.length ? control + rowsOnPage.map(card).join('') : '<p class="empty">No live sessions.</p>';
+    sessionsEl.innerHTML = restorePanel() + (rowsOnPage.length ? control + rowsOnPage.map(card).join('') : '<p class="empty">No live sessions.</p>');
   }
 
   function rememberResult(r, text) {
@@ -146,6 +164,23 @@
   }
 
   async function act(event) {
+    const restore = event.target.closest('[data-restore-sessions]');
+    if (restore && sessionsEl && sessionsEl.contains(restore) && !restoreBusy) {
+      restoreBusy = true;
+      restoreReports = [];
+      renderCards();
+      try {
+        const result = await CC.post('/api/restore', {});
+        if (!result.ok) throw new Error(result.detail || 'refused');
+        restoreReports = Array.isArray(result.sessions) ? result.sessions : [];
+      } catch (error) {
+        restoreReports = [{tmux: 'Restore', ok: false, detail: error.message}];
+      }
+      restoreBusy = false;
+      renderCards();
+      setTimeout(() => { refresh().catch(() => {}); }, 600);
+      return;
+    }
     const seenAll = event.target.closest('[data-seen-all]');
     if (seenAll && sessionsEl && sessionsEl.contains(seenAll)) {
       seenAllError = '';
@@ -213,8 +248,10 @@
   }
 
   async function refresh() {
-    const [rows, usage] = await Promise.all([CC.get('/api/sessions'), CC.get('/api/usage').catch(() => null)]);
+    const [rows, usage, restore] = await Promise.all([
+      CC.get('/api/sessions'), CC.get('/api/usage').catch(() => null), CC.get('/api/restore').catch(() => null)]);
     if (usage) strip(usage);
+    restoreState = restore;
     CC.badge('sessions', rows.filter(r => r.waiting).length);
     rowsOnPage = rows;
     renderCards();

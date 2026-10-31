@@ -200,6 +200,22 @@ to run in tmux, so install it if you want that feature:
 sudo apt install -y tmux
 ```
 
+### Session restore snapshots
+
+To keep a small local snapshot of tmux-backed sessions for crash recovery,
+install the optional user timer. The Sessions tab offers to restore missing
+saved sessions after a reboot or crash.
+
+```bash
+.venv/bin/python -m claude_companion.restore install-timer
+```
+
+Remove only that timer later with:
+
+```bash
+.venv/bin/python -m claude_companion.restore uninstall-timer
+```
+
 ### Comms and Piper
 
 Comms is optional. It makes Claude Code sessions produce short audio clips
