@@ -12,6 +12,9 @@
     .scard .reply { margin:6px 0 0; max-height:4.4em; overflow:hidden; color:var(--fg); }
     .scard .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
     .scard .action-result { margin:8px 0 0; color:var(--dim); }
+    .scard .newbadge { color:var(--accent); border:1px solid var(--accent); border-radius:6px; padding:0 6px; font-size:.75rem; font-weight:700; }
+    .sessions-seen-all { margin:0 0 10px; }
+    .sessions-seen-all .faint { margin-left:8px; }
     .wbadge { color:var(--alert); border:1px solid var(--alert); border-radius:6px; padding:0 6px; font-size:.75rem; font-weight:700; }
     .clearbadge { color:var(--busy); border:1px solid var(--busy); border-radius:6px; padding:0 6px; font-size:.75rem; font-weight:700; }
     .cold { color:var(--alert); }
@@ -30,8 +33,10 @@
   const RESULT_MS = 6000;
   const arms = new Map();
   const results = new Map();
+  const locallySeen = new Map();
   let rowsOnPage = [];
   let sessionsEl = null;
+  let seenAllError = '';
 
   const cardKey = r => `${String(r.pid || '')}:${String(r.session_id || '')}:${String(r.speaker || r.name || '')}`;
   const actionKey = (r, action) => `${action}:${cardKey(r)}`;
@@ -48,6 +53,12 @@
       return '';
     }
     return `<p class="action-result" role="status">${esc(value.text)}</p>`;
+  }
+
+  function isUnread(r) {
+    if (!r.unread) return false;
+    const seenAt = locallySeen.get(cardKey(r));
+    return seenAt === undefined || seenAt < Number(r.last_reply_at || 0);
   }
 
   function actionButton(r, action, label) {
@@ -90,7 +101,7 @@
     const pct = Math.max(0, Math.min(100, Number(r.context_pct) || 0));
     return `<article class="card scard${r.waiting ? ' waiting' : ''}" data-pid="${esc(r.pid)}" data-card-key="${esc(cardKey(r))}" style="--h:${hue(name)}">
       <div class="top"><span class="dot ${esc(r.status)}"></span><h3>${esc(name)}</h3>
-        ${r.waiting ? '<span class="wbadge">waiting</span>' : ''}${r.needs_clear ? '<span class="clearbadge">needs /clear</span>' : ''}${r.child ? '<span class="faint">spawned</span>' : ''}</div>
+        ${r.waiting ? '<span class="wbadge">waiting</span>' : ''}${isUnread(r) ? '<span class="newbadge">new</span>' : ''}${r.needs_clear ? '<span class="clearbadge">needs /clear</span>' : ''}${r.child ? '<span class="faint">spawned</span>' : ''}</div>
       <div class="meta"><span>${esc(r.project)}</span>${r.branch ? `<span>${esc(r.branch)}</span>` : ''}
         <span>${esc(short(r.model))}</span><span>${esc(money(r.cost_usd))}</span><span>${esc(Math.round(pct))}% context</span>
         <span>${esc(ago(r.last_activity))}</span>${cacheChip(r.cache)}</div>
@@ -103,7 +114,9 @@
 
   function renderCards() {
     if (!sessionsEl) return;
-    sessionsEl.innerHTML = rowsOnPage.length ? rowsOnPage.map(card).join('') : '<p class="empty">No live sessions.</p>';
+    const seenAll = rowsOnPage.some(isUnread);
+    const control = seenAll ? `<p class="sessions-seen-all"><button type="button" class="act" data-seen-all>Seen all</button>${seenAllError ? `<span class="faint" role="status">${esc(seenAllError)}</span>` : ''}</p>` : '';
+    sessionsEl.innerHTML = rowsOnPage.length ? control + rowsOnPage.map(card).join('') : '<p class="empty">No live sessions.</p>';
   }
 
   function rememberResult(r, text) {
@@ -119,6 +132,19 @@
   }
 
   async function act(event) {
+    const seenAll = event.target.closest('[data-seen-all]');
+    if (seenAll && sessionsEl && sessionsEl.contains(seenAll)) {
+      seenAllError = '';
+      try {
+        const result = await CC.post('/api/cave/seen-all', {});
+        if (!result.ok) throw new Error(result.detail || 'refused');
+        for (const row of rowsOnPage) locallySeen.set(cardKey(row), Number(row.last_reply_at || 0));
+      } catch (error) {
+        seenAllError = `Not marked: ${error.message}`;
+      }
+      renderCards();
+      return;
+    }
     const button = event.target.closest('[data-card-action]');
     if (!button || !sessionsEl || !sessionsEl.contains(button)) return;
     const cardEl = button.closest('.scard');
@@ -158,7 +184,8 @@
     } catch (error) {
       rememberResult(row, `Not ${verbs[action]}: ${error.message}`);
     }
-    await refresh();
+    renderCards();
+    setTimeout(() => { refresh().catch(() => {}); }, 1200);
   }
 
   function strip(u) {

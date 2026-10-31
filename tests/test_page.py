@@ -21,7 +21,8 @@ ROWS = [
     {"pid": 3, "name": "gamma", "project": "worker", "title": "", "status": "idle", "waiting": False,
      "model": "claude-haiku-5-5", "cost_usd": 0.1, "context_pct": 5, "last_reply": "Ready.",
      "last_activity": 10, "cwd": "/w/worker", "child": False, "session_id": "s3",
-     "suggestion": "Review the compact example and confirm the checks still pass before continuing."},
+     "suggestion": "Review the compact example and confirm the checks still pass before continuing.",
+     "unread": True, "last_reply_at": 100},
 ]
 USAGE = {"five_hour": {"cost_usd": 1.5, "total_tokens": 1000}, "seven_day": {"cost_usd": 20, "total_tokens": 9000},
          "limits": {"available": False, "reason": "no credentials"}}
@@ -151,6 +152,14 @@ def test_a_single_card_action_tap_does_not_post(page):
     assert calls == []
 
 
+def test_card_action_refusal_shows_the_servers_detail(page):
+    page.route("**/api/cave/stop/alpha", lambda route: route.fulfill(json={"ok": False, "detail": "the session is gone"}))
+    button = page.locator('.scard:has(h3:text-is("alpha")) [data-card-action="stop"]')
+    button.click()
+    button.click()
+    page.locator(".action-result", has_text="Not stopped: the session is gone").wait_for(timeout=1000)
+
+
 def test_card_suggestion_arms_then_posts_its_original_words(page):
     calls = []
 
@@ -170,3 +179,20 @@ def test_card_suggestion_arms_then_posts_its_original_words(page):
     assert len(calls) == 1
     assert calls[0][0].endswith("/api/cave/suggest/gamma")
     assert calls[0][1] == {"pid": 3, "session_id": "s3", "words": ROWS[2]["suggestion"]}
+
+
+def test_new_badge_and_seen_all_clear_it(page):
+    calls = []
+
+    def seen_all(route):
+        calls.append(route.request.post_data_json)
+        route.fulfill(json={"ok": True, "marked": 1})
+
+    page.route("**/api/cave/seen-all", seen_all)
+    card = page.locator('.scard:has(h3:text-is("gamma"))')
+    assert card.locator(".newbadge").inner_text() == "new"
+    page.get_by_role("button", name="Seen all").click()
+    assert calls == [{}]
+    page.wait_for_function("document.querySelectorAll('.newbadge').length === 0")
+    assert page.locator(".newbadge").count() == 0
+    assert page.get_by_role("button", name="Seen all").count() == 0
