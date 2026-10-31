@@ -113,6 +113,25 @@ def _snapshot(path: Path) -> Snapshot | None:
     return Snapshot(raw, text, after.st_mtime_ns, hashlib.sha256(raw).hexdigest())
 
 
+def _listable(path: Path) -> bool:
+    """A cheap listing check: size and the first 4 KB, never the whole file.
+    Opening a file still takes a full snapshot."""
+    try:
+        if path.stat().st_size > MAX_BYTES:
+            return False
+        with path.open("rb") as handle:
+            head = handle.read(4096)
+    except OSError:
+        return False
+    if b"\0" in head:
+        return False
+    try:
+        head.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        return exc.start >= len(head) - 3      # a character cut at the 4 KB edge
+    return True
+
+
 def visible_files(root: Path) -> list[str]:
     """Text files under the project that git does not ignore.
 
@@ -134,7 +153,7 @@ def visible_files(root: Path) -> list[str]:
         if _skipped(relative):
             continue
         path = safe_paths.file(root, relative)
-        if path is not None and _snapshot(path) is not None:
+        if path is not None and _listable(path):
             out.append(relative)
     return sorted(out, key=str.lower)
 
