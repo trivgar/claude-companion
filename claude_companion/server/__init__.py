@@ -21,7 +21,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from .. import clearline, config, restart
+from .. import clearline, config, jobreaper, restart
 from ..webpush import PushStore
 from . import auth, sessions
 from . import livecall
@@ -106,6 +106,7 @@ def create_app(token: str | None = None, owner_key: str | None = None) -> FastAP
             start(app)
     if "pytest" not in sys.modules:
         clearline.Watcher(_clear_rows, _send_clear_push).start()
+        jobreaper.start(sessions.data_dir())
 
     @app.get("/api/features")
     def features():

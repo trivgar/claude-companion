@@ -31,6 +31,11 @@ app_name = "Companion"
 # A top-level session at this many context tokens says "needs /clear".
 # clear_line = 400000
 
+# Reap an orphaned run_in_background shell after this age.  The scan runs
+# every 10 minutes by default; set job_reaper_every_min = 0 to turn it off.
+# job_reaper_after_min = 60
+# job_reaper_every_min = 10
+
 # Notes between two people's Claudes on a shared repo (COLLAB.md)
 # collab_label = "for-alex"        # your label: notes filed for you
 # collab_from = "sam-github-login" # whose notes your sessions are shown (comma separated); empty shows none

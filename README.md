@@ -48,8 +48,10 @@ The tabs, in the order they sit on the page. Turn any of them off with the
 **Sessions.** One card per live Claude Code session: model, cost, how full its
 context is, the git branch, and its last reply. A session that is waiting on
 you says so. Set a context line to flag a top-level session that needs
-`/clear` and receive one push notification on each crossing. At the top, your
-5-hour and 7-day spend and your real limits.
+`/clear` and receive one push notification on each crossing. Background Bash
+jobs show their command and age, and stale orphan snapshot shells are reaped
+after a configurable delay. At the top, your 5-hour and 7-day spend and your
+real limits.
 
 **Asks.** When a session wants permission to run something, or asks you a
 multiple-choice question, it shows up here with Allow and Deny. If the command
@@ -139,6 +141,10 @@ corresponding feature is used:
 - The Sessions tab writes `~/.claude/usage-cache.json` and
   `~/.claude/limits-cache.json` unless `data_dir` is configured. They are local
   caches for token totals and limit checks.
+- The stale background-job reaper writes `job-reaper.jsonl` in the app data
+  directory when it terminates an orphaned snapshot shell. It records the time,
+  process ids, age and redacted command; set `job_reaper_every_min = 0` to turn
+  that reaper off.
 - The standalone `notify` hook writes a waiting marker at
   `~/.claude/session-companion-waiting/<pid>`. If that hook sends Web Push, it
   can also create `session-companion-vapid.json` and
@@ -329,6 +335,8 @@ hooks run outside any server's process.
 | `icons` | A module with `icon_data(tag, title)` and `icon_for(tag, title)` for each push's picture (optional) |
 | `archive_roots` | Old transcript trees to count in the lifetime total (a list; `:`-separated in the environment) |
 | `tts_dir` | Directory containing an executable speech coordinator `speak.sh`; optional and compatible with AgentVibes-style coordinators |
+| `job_reaper_after_min` | Age before an orphaned background snapshot shell is terminated; default 60 |
+| `job_reaper_every_min` | Reaper interval in minutes; default 10, and 0 turns it off |
 
 ### Helpers and background jobs
 

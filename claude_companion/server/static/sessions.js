@@ -10,6 +10,10 @@
     .scard .top h3 { margin:0; }
     .scard .meta { display:flex; flex-wrap:wrap; gap:4px 12px; color:var(--dim); font-size:.8rem; margin:2px 0 6px; }
     .scard .reply { margin:6px 0 0; max-height:4.4em; overflow:hidden; color:var(--fg); }
+    .scard .bg-jobs { margin:7px 0 0; color:var(--dim); font-size:.8rem; }
+    .scard .bg-job { display:flex; gap:8px; justify-content:space-between; align-items:baseline; }
+    .scard .bg-job code { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .scard .bg-job time { flex:0 0 auto; color:var(--faint); }
     .scard .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
     .scard .action-result { margin:8px 0 0; color:var(--dim); }
     .scard .newbadge { color:var(--accent); border:1px solid var(--accent); border-radius:6px; padding:0 6px; font-size:.75rem; font-weight:700; }
@@ -96,6 +100,15 @@
     return text ? `<span class="cold">${esc(text)}</span>` : '';
   }
 
+  function backgroundJobs(r) {
+    const jobs = Array.isArray(r.bg_job_list) ? r.bg_job_list : [];
+    if (!jobs.length) return '';
+    const count = jobs.length;
+    const label = `${count} job${count === 1 ? '' : 's'} running`;
+    const lines = jobs.map(job => `<div class="bg-job"><code>${esc(job.cmd || 'shell job')}</code><time>${esc(ago(job.age_s).replace(' ago', ''))}</time></div>`).join('');
+    return `<div class="bg-jobs"><div>${esc(label)}</div>${lines}</div>`;
+  }
+
   function card(r) {
     const name = r.speaker || r.name || r.project || 'session';
     const pct = Math.max(0, Math.min(100, Number(r.context_pct) || 0));
@@ -107,6 +120,7 @@
         <span>${esc(ago(r.last_activity))}</span>${cacheChip(r.cache)}</div>
       ${r.title ? `<div class="dim">${esc(r.title)}</div>` : ''}
       ${r.last_reply ? `<p class="reply">${esc(r.last_reply)}</p>` : ''}
+      ${backgroundJobs(r)}
       <div class="bar${pct >= 80 ? ' hot' : ''}"><i style="width:${pct}%"></i></div>
       ${actionRow(r)}
     </article>`;
