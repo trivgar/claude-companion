@@ -31,3 +31,17 @@ def test_hook_outputs_open_and_answered_handoffs_from_fixture_file(tmp_path, mon
     assert "Answered requests from source" in asked_context
     assert "the result is ready" in asked_context
     assert open_entry["header"] not in asked_context
+
+
+def test_a_cleared_session_is_told_again_though_the_file_did_not_change(tmp_path, monkeypatch):
+    path, state = tmp_path / "deferred.md", tmp_path / "seen"
+    source, receiver = tmp_path / "source", tmp_path / "receiver"
+    source.mkdir()
+    receiver.mkdir()
+    monkeypatch.setenv("CLAUDE_COMPANION_DEFERRED_FILE", str(path))
+    monkeypatch.setenv("CLAUDE_COMPANION_DEFERRED_HOOK_STATE_DIR", str(state))
+    deferred.add("review the change", by="sender", for_project="receiver", path=path, cwd=source)
+    start = {"cwd": str(receiver), "session_id": "s", "hook_event_name": "SessionStart"}
+    assert "review the change" in deferred_hook.run(start)
+    assert deferred_hook.run(dict(start, hook_event_name="UserPromptSubmit")) == ""
+    assert "review the change" in deferred_hook.run(start)

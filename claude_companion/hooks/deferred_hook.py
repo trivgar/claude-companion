@@ -91,7 +91,10 @@ def run(payload: dict | None = None) -> str:
     state_dir = deferred.hook_state_dir()
     session = _session_name(payload.get("session_id"), cwd)
     stamp = _stamp(source)
-    if _unchanged(state_dir, session, stamp):
+    event = str(payload.get("hook_event_name") or "")
+    # A session that starts, resumes or was cleared has lost what it was told,
+    # so only prompt hooks skip an unchanged file.
+    if event != "SessionStart" and _unchanged(state_dir, session, stamp):
         return ""
     entries = deferred.read(source)
     project = deferred.project_of(cwd)
@@ -99,7 +102,6 @@ def run(payload: dict | None = None) -> str:
     _mark(state_dir, session, stamp)
     if not context:
         return ""
-    event = str(payload.get("hook_event_name") or "")
     return json.dumps({"hookSpecificOutput": {"hookEventName": event,
                                                "additionalContext": context}})
 
