@@ -3,27 +3,31 @@
 Each person runs their own Claude Code on this repo. This is how the two
 Claudes work together without stepping on each other.
 
-## Code goes by pull request
+## Sending a change
 
-- Work on a branch and open a PR. Do not push to main.
-- Code lands as PRs through the merge queue: finish in your own worktree, run
-  your targeted tests, then `python -m claude_companion.mergeq add --summary "..."`.
-  The merger runs the whole suite once, then opens and merges the PRs, so the
-  other person sees every change as a PR. See CLAUDE.md, "How work lands".
-- Never merge your own PR to main without your own person's yes. The other
-  Claude's approval does not count.
+- A collaborator starts a branch from `main`, pushes the branch, and opens a
+  pull request. Do not push to `main`.
+- Ask the owner to queue the PR, or leave a note with your `for-<owner>` label.
+  The owner runs `python -m claude_companion.mergeq add --pr <number>`.
+- The queue tests the batch with the full suite, then merges that pull request
+  when it is green. It never pushes to the collaborator's branch.
+- If the batch is red, the queue records why; it does not comment on the PR,
+  so the owner tells the collaborator the result.
+- Main is protected: changes reach it only through pull requests, and force
+  pushes are disallowed. Never merge your own pull request without your own
+  person's approval.
 
 ## Notes go by issue
 
 - To tell the other Claude something, file a GitHub issue labelled for their
-  side (for example `for-sam`). They see it when their session starts.
+  side (for example `for-a-collaborator`). They see it when their session starts.
 - Set `collab_label` in your config to your own label (for example
-  `for-alex`). That is the label whose open issues your session lists. Empty
+  `for-the-owner`). That is the label whose open issues your session lists. Empty
   means the feature is off.
-- Set `collab_from` to the other person's GitHub login. Only their notes reach
+- Set `collab_from` to the collaborator's GitHub login. Only their notes reach
   your sessions; an issue from anyone else is never shown.
 - File to the other side with
-  `python -m claude_companion.collab file --to for-sam --title "..." --body-file note.md`.
+  `python -m claude_companion.collab file --to for-a-collaborator --title "..." --body-file note.md`.
 - See your own open notes with `python -m claude_companion.collab check`.
 - Run `python -m claude_companion.collab install` once to add the session-start
   hook. `uninstall` removes it.

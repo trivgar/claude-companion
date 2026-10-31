@@ -28,10 +28,18 @@ if a[:2] == ["auth", "status"]:
     sys.exit(1 if os.environ.get("FAKE_GH_UNAUTHED") else 0)
 st = os.environ["FAKE_LOG"] + ".prs"
 prs = json.load(open(st)) if os.path.exists(st) else {}
+prs.update(json.loads(os.environ.get("FAKE_EXISTING_PRS", "{}")))
 origin = os.environ["FAKE_ORIGIN"]
 def oid(br):
     r = subprocess.run(["git", "-C", origin, "rev-parse", "refs/heads/" + br], capture_output=True, text=True)
     return r.stdout.strip()
+def info(n):
+    v = prs[n]
+    return v if isinstance(v, dict) else {"branch": v}
+def head_oid(br):
+    o = os.environ.get("FAKE_HEAD_OVERRIDE", "")
+    brx, _, val = o.partition("=")
+    return val if brx == br else oid(br)
 def opt(name):
     return a[a.index(name) + 1]
 if a[:2] == ["pr", "create"]:
@@ -39,22 +47,24 @@ if a[:2] == ["pr", "create"]:
     if os.environ.get("FAKE_FAIL_CREATE") == br:
         sys.stderr.write("create exploded\\n")
         sys.exit(1)
-    n = len(prs) + 1
+    n = max([int(x) for x in prs] + [0]) + 1
     prs[str(n)] = br
     json.dump(prs, open(st, "w"))
     print("https://github.com/o/r/pull/%d" % n)
 if a[:2] == ["pr", "list"]:
     br = opt("--head")
-    o = os.environ.get("FAKE_HEAD_OVERRIDE", "")
-    brx, _, val = o.partition("=")
-    print(json.dumps([{"number": int(n), "headRefOid": val if brx == br else oid(br),
+    print(json.dumps([{"number": int(n), "headRefOid": head_oid(br),
                        "headRepositoryOwner": {"login": "o"}, "isCrossRepository": False}
-                      for n, b in prs.items() if b == br]))
+                      for n in prs if info(n)["branch"] == br]))
 if a[:2] == ["pr", "view"]:
-    print(json.dumps({"state": "MERGED" if os.environ.get("FAKE_MERGED_VIEW") == a[2] else "OPEN"}))
+    p = info(a[2])
+    state = "MERGED" if os.environ.get("FAKE_MERGED_VIEW") == a[2] else p.get("state", "OPEN")
+    print(json.dumps({"headRefName": p["branch"], "headRefOid": head_oid(p["branch"]),
+                      "isCrossRepository": p.get("isCrossRepository", False), "state": state,
+                      "title": p.get("title", "queued change")}))
 if a[:2] == ["pr", "merge"]:
-    br = prs[a[2]]
-    if "--match-head-commit" in a and opt("--match-head-commit") != oid(br):
+    br = info(a[2])["branch"]
+    if "--match-head-commit" in a and opt("--match-head-commit") != head_oid(br):
         sys.stderr.write("head moved\\n")
         sys.exit(1)
     d = tempfile.mkdtemp()
@@ -95,6 +105,7 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setenv("FAKE_ORIGIN", str(origin))
     monkeypatch.setenv("CLAUDE_COMPANION_MERGEQ_DIR", str(tmp_path / "state"))
     monkeypatch.delenv("FAKE_GH_UNAUTHED", raising=False)
+    monkeypatch.delenv("FAKE_EXISTING_PRS", raising=False)
 
     class W:
         pass
@@ -118,6 +129,15 @@ def world(tmp_path, monkeypatch):
         w.store.add(name, sha, summary)
         return wt, sha
 
+    def existing_pr(number, name, files, state="OPEN", is_cross_repository=False, title="queued change"):
+        wt, sha = branch(name, files)
+        sh(wt, "git", "push", "-q", "origin", f"HEAD:refs/heads/{name}")
+        prs = json.loads(os.environ.get("FAKE_EXISTING_PRS", "{}"))
+        prs[str(number)] = {"branch": name, "state": state,
+                            "isCrossRepository": is_cross_repository, "title": title}
+        monkeypatch.setenv("FAKE_EXISTING_PRS", json.dumps(prs))
+        return wt, sha
+
     def go(**kw):
         return mergeq.run(repo=main, base=tmp_path / "state", suite=SUITE, say=w.said.append,
                           notify=lambda *a: w.notes.append(a), **kw)
@@ -131,7 +151,7 @@ def world(tmp_path, monkeypatch):
         r = subprocess.run(["git", "-C", str(origin), "cat-file", "-e", f"{ref}:{path}"], capture_output=True)
         return r.returncode == 0
 
-    w.branch, w.queue, w.go, w.calls, w.origin_has = branch, queue, go, calls, origin_has
+    w.branch, w.queue, w.existing_pr, w.go, w.calls, w.origin_has = branch, queue, existing_pr, go, calls, origin_has
     return w
 
 
@@ -258,11 +278,94 @@ def test_add_cli_pins_branch_and_refuses_main(world, capsys):
         os.chdir(cwd)
     q = world.store.queue()
     assert q[0]["branch"] == "feat/z" and q[0]["sha"] == sha and q[0]["summary"] == "zed"
+    assert "pr" not in q[0]
     os.chdir(world.main)
     try:
         assert mergeq.main(["add"]) == 1
     finally:
         os.chdir(cwd)
+
+
+def test_add_pr_pins_the_head_oid(world, capsys):
+    _, sha = world.existing_pr(42, "feat/queued-pr", {"queued.txt": "queued\n"},
+                               title="queue an existing change")
+    cwd = os.getcwd()
+    os.chdir(world.main)
+    try:
+        assert mergeq.main(["add", "--pr", "42"]) == 0
+    finally:
+        os.chdir(cwd)
+    assert "queued PR #42" in capsys.readouterr().out
+    entry = world.store.queue()[0]
+    assert entry["branch"] == "feat/queued-pr" and entry["sha"] == sha and entry["pr"] == 42
+    assert entry["summary"] == "queue an existing change"
+    assert world.calls("pr", "view")[0] == [
+        "pr", "view", "42", "--json", "headRefName,headRefOid,isCrossRepository,state,title"
+    ]
+
+
+def test_green_queued_pr_merges_that_pr_without_creating_one(world, monkeypatch):
+    _, sha = world.existing_pr(42, "feat/queued-pr", {"queued.txt": "queued\n"})
+    cwd = os.getcwd()
+    os.chdir(world.main)
+    try:
+        assert mergeq.main(["add", "--pr", "42"]) == 0
+    finally:
+        os.chdir(cwd)
+    commands = []
+    real_run = mergeq._run
+
+    def record_run(args, *args_, **kwargs):
+        commands.append(args)
+        return real_run(args, *args_, **kwargs)
+
+    monkeypatch.setattr(mergeq, "_run", record_run)
+    assert world.go() == 0
+    assert world.origin_has("queued.txt")
+    assert world.calls("pr", "create") == []
+    assert world.calls("pr", "merge") == [
+        ["pr", "merge", "42", "--merge", "--match-head-commit", sha]
+    ]
+    assert not any(command[:1] == ["git"] and "push" in command for command in commands)
+    assert world.store.last()["outcomes"][0]["state"] == "merged"
+
+
+@pytest.mark.parametrize(
+    ("state", "is_cross_repository", "expected"),
+    [("CLOSED", False, "CLOSED"), ("MERGED", False, "MERGED"), ("OPEN", True, "another repository")],
+)
+def test_add_pr_refuses_closed_merged_or_forked_pr(world, capsys, state, is_cross_repository, expected):
+    world.existing_pr(42, "feat/queued-pr", {"queued.txt": "queued\n"}, state=state,
+                      is_cross_repository=is_cross_repository)
+    cwd = os.getcwd()
+    os.chdir(world.main)
+    try:
+        assert mergeq.main(["add", "--pr", "42"]) == 1
+    finally:
+        os.chdir(cwd)
+    assert expected in capsys.readouterr().err
+    assert world.store.queue() == []
+
+
+def test_moved_queued_pr_head_is_reported_and_not_merged(world):
+    wt, sha = world.existing_pr(42, "feat/queued-pr", {"queued.txt": "queued\n"})
+    cwd = os.getcwd()
+    os.chdir(world.main)
+    try:
+        assert mergeq.main(["add", "--pr", "42"]) == 0
+    finally:
+        os.chdir(cwd)
+    (wt / "after-queue.txt").write_text("later\n")
+    sh(wt, "git", "add", "after-queue.txt")
+    sh(wt, "git", "commit", "-q", "-m", "after queueing")
+    sh(wt, "git", "push", "-q", "origin", "HEAD:refs/heads/feat/queued-pr")
+    assert world.go() == 1
+    assert world.calls("pr", "create") == []
+    assert world.calls("pr", "merge") == [
+        ["pr", "merge", "42", "--merge", "--match-head-commit", sha]
+    ]
+    outcome = world.store.last()["outcomes"][0]
+    assert outcome["state"] == "push-failed" and "head moved since it was pinned" in outcome["detail"]
 
 
 def test_moved_pr_head_is_refused_and_not_merged(world, monkeypatch):
