@@ -5,6 +5,11 @@ Claudes work together without stepping on each other.
 
 ## Sending a change
 
+- The owner, working on the PC that runs the merge queue, finishes in their
+  own worktree, runs the targeted tests, then
+  `python -m claude_companion.mergeq add --summary "..."`. The merger runs the
+  whole suite once, then opens and merges the PRs. See CLAUDE.md, "How work
+  lands".
 - A collaborator starts a branch from `main`, pushes the branch, and opens a
   pull request. Do not push to `main`.
 - Ask the owner to queue the PR, or leave a note with your `for-<owner>` label.
