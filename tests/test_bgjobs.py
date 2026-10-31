@@ -78,6 +78,9 @@ def test_redact_hides_underscored_names_flags_bearer_and_url_userinfo():
         "curl https://x.test/?a=1&access_token=pw9": "pw9",
         "curl https://x.test/?x=1&password=pw10": "pw10",
         "run a=1,password=pw11": "pw11",
+        "curl -U a:pw12 https://x.test": "pw12",
+        "curl --header 'X: pw13' https://x.test": "pw13",
+        "smbclient -U user%pw14 //h/s": "pw14",
     }
     for command, secret in cases.items():
         assert secret not in bgjobs.redact(command), command

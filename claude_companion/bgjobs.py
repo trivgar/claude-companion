@@ -21,8 +21,8 @@ _EVAL = re.compile(r"\beval\s+('(?:[^']|'\"'\"')*')", re.S)
 # a,password=b), a single-dash bundle holding u, p or H (-su, -ppw), Bearer
 # or Basic, or a URL with userinfo.
 SCAN_LIMIT = 2048
-_SECRET_WORD = re.compile(r"token|key|pass|pwd|secret|auth|credential|cookie|user|session|sig", re.I)
-_SHORT_FLAG = re.compile(r"-[A-Za-z]*[upH]")
+_SECRET_WORD = re.compile(r"token|key|pass|pwd|secret|auth|credential|cookie|user|session|sig|header", re.I)
+_SHORT_FLAG = re.compile(r"-[A-Za-z]*[upHUP]")
 
 
 def stat(proc: str, pid: int) -> tuple[int, int] | None:
