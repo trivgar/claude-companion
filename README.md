@@ -78,6 +78,8 @@ others); other sources plug in the same way, and a DEMO source is built in.
 A night with no data is left out, never counted as zero. See
 [docs/fitness-sources.md](docs/fitness-sources.md).
 
+**Deferred.** A shared Markdown backlog for work parked until later, including cross-project handoffs that appear when the receiving project starts a session.
+
 **Comms.** Your sessions talk. Each reply ends with one short line that is
 spoken, rendered on your PC with Piper and played on your phone while the page
 is open. Hold and volume are on the Settings page. See
@@ -143,11 +145,12 @@ corresponding feature is used:
   `session-companion-push.json` there.
 - `python -m claude_companion.server.install_hooks` adds its hooks to
   `~/.claude/settings.json` and first writes a timestamped
-  `~/.claude/settings.json.bak-...` backup: the asks hooks, and a
-  PostToolUse(Bash) hook that appends each `git commit` a session makes to
-  `commits.jsonl` in the app data directory (session id, folder, commit and
-  subject; nothing leaves the PC). Its `--uninstall` option removes only those
-  hooks and also backs up the settings file when it changes it.
+  `~/.claude/settings.json.bak-...` backup: the asks hooks, SessionStart and
+  UserPromptSubmit hooks for deferred handoffs, and a PostToolUse(Bash) hook
+  that appends each `git commit` a session makes to `commits.jsonl` in the app
+  data directory (session id, folder, commit and subject; nothing leaves the
+  PC). Its `--uninstall` option removes only those hooks and also backs up the
+  settings file when it changes it.
 - `comms/install.sh` adds its Stop, SessionStart, and UserPromptSubmit hooks to
   `~/.claude/settings.json` and first writes a timestamped backup. It also
   registers the `tts` MCP server with `claude mcp add tts --scope user`; Claude
