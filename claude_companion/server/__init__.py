@@ -24,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from .. import clearline, config, jobreaper, restart
 from ..webpush import PushStore
 from . import auth, restore, sessions
+from . import auth, newsession, sessions
 from . import livecall
 from .features import FEATURES
 
@@ -77,6 +78,7 @@ def create_app(token: str | None = None, owner_key: str | None = None) -> FastAP
     app.state.pair_failures = []
     app.state.restart_check = restart.Check()
     app.include_router(restore.router)
+    app.include_router(newsession.router)
 
     @app.middleware("http")
     async def host_check(request: Request, call_next):
