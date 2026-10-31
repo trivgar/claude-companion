@@ -3,11 +3,12 @@
 Every job happens in its own worktree on its own branch. A session whose own
 targeted tests pass runs `python -m claude_companion.mergeq add` and moves on.
 `mergeq run` (by hand, or the systemd timer) is the one merger: it takes the
-queued branches in order, each pinned to the sha it was queued at, merges them
-in an integration worktree of its own, runs the whole suite, and for each
-branch that merged cleanly pushes it, opens a PR to main and merges that PR,
-only if the suite was green. It never resolves a conflict, never edits code,
-never pushes main (main moves only through `gh pr merge`) and never forces.
+queued branches or existing PRs in order, each pinned to the sha it was queued
+at, merges them in an integration worktree of its own, runs the whole suite,
+and for each branch that merged cleanly pushes it, opens a PR to main and
+merges that PR, only if the suite was green. Existing PRs are merged directly.
+It never resolves a conflict, never edits code, never pushes main (main moves
+only through `gh pr merge`) and never forces.
 
 Red: the batch is replayed one branch at a time, each followed by the suite;
 the branch that turns it red is dropped and reported, the rest still land.
@@ -103,11 +104,13 @@ class Store:
     def queue(self) -> list[dict]:
         return self._read("queue.json", [])
 
-    def add(self, branch: str, sha: str, summary: str = "") -> dict:
+    def add(self, branch: str, sha: str, summary: str = "", pr: int | None = None) -> dict:
         f = self.lock()
         try:
             q = [e for e in self.queue() if e["branch"] != branch]   # the newest sha wins
             e = {"branch": branch, "sha": sha, "summary": summary, "added": time.time()}
+            if pr is not None:
+                e["pr"] = pr
             q.append(e)
             self._write("queue.json", q)
             return e
@@ -149,6 +152,23 @@ def gh_ready(gh: str = "gh") -> str:
     except (OSError, subprocess.SubprocessError):
         return "gh did not answer; nothing changed"
     return "" if r.returncode == 0 else "gh is not signed in (run `gh auth login`); nothing changed"
+
+
+def _pr_view(repo, gh: str, number: int, fields: str) -> tuple[dict | None, str]:
+    """Return selected PR fields, or a user-facing problem."""
+    try:
+        r = _run([gh, "pr", "view", str(number), "--json", fields], cwd=repo, timeout=120)
+    except (OSError, subprocess.SubprocessError) as ex:
+        return None, f"gh pr view: {ex}"
+    if r.returncode:
+        return None, "gh pr view: " + _last_line(r.stderr or r.stdout)
+    try:
+        data = json.loads(r.stdout or "{}")
+    except ValueError:
+        return None, "gh pr view: unreadable answer"
+    if not isinstance(data, dict):
+        return None, "gh pr view: unreadable answer"
+    return data, ""
 
 
 # --- the suite -------------------------------------------------------------------
@@ -320,20 +340,23 @@ def _run_locked(store, repo, suite, gh, notify, say) -> int:
         say("nothing merged")
         return finish(1 if outcomes else 0, suite_green=False)
 
-    # 3. green: push each pinned sha, open the PR, merge it.
+    # 3. green: push local branches and create their PRs, or merge queued PRs.
     landed = 0
     waiting: list[dict] = []
     for i, e in enumerate(merged):
         b = e["branch"]
-        p = _run(["git", "-C", str(repo), "push", "origin", f"{e['sha']}:refs/heads/{b}"])
-        if p.returncode:
-            problem = _last_line(p.stderr)
+        if e.get("pr") is not None:
+            problem = _merge_queued_pr(repo, gh, e)
         else:
-            problem = _open_and_merge(repo, gh, e, passed)
-            if not problem:
-                d = _run(["git", "-C", str(repo), "push", "origin", "--delete", b])
-                if d.returncode:
-                    store.log(f"{b}: remote branch delete failed: {_last_line(d.stderr)}")
+            p = _run(["git", "-C", str(repo), "push", "origin", f"{e['sha']}:refs/heads/{b}"])
+            if p.returncode:
+                problem = _last_line(p.stderr)
+            else:
+                problem = _open_and_merge(repo, gh, e, passed)
+                if not problem:
+                    d = _run(["git", "-C", str(repo), "push", "origin", "--delete", b])
+                    if d.returncode:
+                        store.log(f"{b}: remote branch delete failed: {_last_line(d.stderr)}")
         if problem:
             out(e, PUSH_FAILED, problem)
             waiting = merged[i + 1:]
@@ -396,6 +419,27 @@ def _open_and_merge(repo, gh, e, passed) -> str:
     return "gh pr merge: " + _last_line(r.stderr)
 
 
+def _merge_queued_pr(repo, gh, e) -> str:
+    """Merge an already-open same-repository PR at the sha the queue tested."""
+    number, sha = e["pr"], e["sha"]
+    r = _run([gh, "pr", "merge", str(number), "--merge", "--match-head-commit", sha],
+             cwd=repo, timeout=120)
+    if not r.returncode:
+        return ""
+    pr, view_problem = _pr_view(repo, gh, number, "headRefOid,state,isCrossRepository")
+    if pr:
+        if pr.get("state") != "OPEN":
+            return f"PR #{number} is {pr.get('state')}, no longer open; not merged"
+        if pr.get("isCrossRepository"):
+            return f"PR #{number} comes from another repository; not merged"
+        head = pr.get("headRefOid")
+        if head != sha:
+            return (f"PR #{number} head moved since it was pinned ({str(head)[:12]}, not {sha[:12]}); "
+                    "not merged because --match-head-commit protects the tested commit")
+    detail = _last_line(r.stderr)
+    return "gh pr merge: " + detail + (f" ({view_problem})" if view_problem else "")
+
+
 def _subject(repo, rev) -> str:
     """The commit's subject line, for a PR title when the queue has no summary."""
     c = _run(["git", "log", "-1", "--format=%s", str(rev)], cwd=repo, timeout=30)
@@ -409,6 +453,32 @@ def _last_line(text: str) -> str:
 
 # --- the CLI ----------------------------------------------------------------------
 
+def _queue_pr(store: Store, repo: Path, number: int, summary: str) -> tuple[int, str]:
+    if number <= 0:
+        return 1, "PR number must be positive"
+    pr, problem = _pr_view(repo, "gh", number,
+                           "headRefName,headRefOid,isCrossRepository,state,title")
+    if not pr:
+        return 1, problem
+    state = pr.get("state")
+    if state != "OPEN":
+        return 1, f"refusing PR #{number}: it is {state or 'not open'}, not open"
+    if pr.get("isCrossRepository"):
+        return 1, f"refusing PR #{number}: it comes from another repository"
+    branch, sha = pr.get("headRefName"), pr.get("headRefOid")
+    if not isinstance(branch, str) or not branch or not isinstance(sha, str) or not sha:
+        return 1, f"refusing PR #{number}: GitHub did not return a head branch and commit"
+    try:
+        # Same-repository PRs can be fetched by their head branch. This also
+        # leaves the pinned commit available after the collaborator moves on.
+        git(repo, "fetch", "origin", branch)
+        git(repo, "cat-file", "-e", sha + "^{commit}")
+    except RuntimeError as ex:
+        return 1, f"cannot fetch PR #{number} head: {ex}"
+    entry = store.add(branch, sha, summary or str(pr.get("title") or ""), pr=number)
+    return 0, f"queued PR #{number} ({branch}) at {entry['sha'][:12]} ({len(store.queue())} in the queue)"
+
+
 def _age(t: float) -> str:
     s = int(time.time() - t)
     return f"{s // 3600}h" if s >= 3600 else f"{s // 60}m" if s >= 60 else f"{s}s"
@@ -419,6 +489,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("add", help="queue a finished branch, pinned to its current sha")
     a.add_argument("branch", nargs="?")
+    a.add_argument("--pr", type=int, metavar="NUMBER", help="queue an existing same-repository PR")
     a.add_argument("--summary", default="")
     r = sub.add_parser("run", help="merge the queue (the timer runs this)")
     r.add_argument("--if-queued", action="store_true", help="exit quietly when the queue is empty")
@@ -429,6 +500,13 @@ def main(argv: list[str] | None = None) -> int:
     ns = ap.parse_args(argv)
     store = Store()
     if ns.cmd == "add":
+        if ns.pr is not None:
+            if ns.branch:
+                print("use either a branch or --pr, not both", file=sys.stderr)
+                return 1
+            code, message = _queue_pr(store, Path("."), ns.pr, ns.summary)
+            print(message, file=sys.stderr if code else sys.stdout)
+            return code
         try:
             branch = ns.branch or git(".", "rev-parse", "--abbrev-ref", "HEAD")
             if branch in ("main", "HEAD"):
