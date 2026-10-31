@@ -1,8 +1,8 @@
-"""Put the ask hooks into Claude Code's settings.
+"""Put the companion hooks into Claude Code's settings.
 
     python -m claude_companion.server.install_hooks [--uninstall] [--settings PATH]
 
-Adds the PermissionRequest hook and the AskUserQuestion PreToolUse hook to
+Adds the asks hooks and the commit-recording PostToolUse hook to
 ~/.claude/settings.json (or $CLAUDE_HOME/settings.json) after a timestamped
 backup. Safe to run twice: when nothing would change, nothing is written and
 no backup is made. Other hooks are left exactly as they were.
@@ -17,31 +17,35 @@ import sys
 import time
 from pathlib import Path
 
-MODULE = "claude_companion.hooks.permission_hook"
+ASK_MODULE = "claude_companion.hooks.permission_hook"
+COMMIT_MODULE = "claude_companion.hooks.commit_hook"
 TIMEOUT_S = 86400                    # the hook waits as long as the ask is open
+COMMIT_TIMEOUT_S = 5
 
 
 def settings_path() -> Path:
     return Path(os.environ.get("CLAUDE_HOME") or Path.home() / ".claude") / "settings.json"
 
 
-def _ours(entry) -> bool:
+def _ours(entry, module: str) -> bool:
     return isinstance(entry, dict) and any(
-        MODULE in str(h.get("command", "")) for h in entry.get("hooks", []) if isinstance(h, dict))
+        module in str(h.get("command", "")) for h in entry.get("hooks", []) if isinstance(h, dict))
 
 
-def _wanted(python: str) -> dict[str, dict]:
-    hook = {"type": "command", "command": f"{python} -m {MODULE}", "timeout": TIMEOUT_S}
-    return {"PermissionRequest": {"matcher": ".*", "hooks": [dict(hook)]},
-            "PreToolUse": {"matcher": "AskUserQuestion", "hooks": [dict(hook)]}}
+def _wanted(python: str) -> dict[str, tuple[dict, str]]:
+    ask = {"type": "command", "command": f"{python} -m {ASK_MODULE}", "timeout": TIMEOUT_S}
+    commit = {"type": "command", "command": f"{python} -m {COMMIT_MODULE}", "timeout": COMMIT_TIMEOUT_S}
+    return {"PermissionRequest": ({"matcher": ".*", "hooks": [dict(ask)]}, ASK_MODULE),
+            "PreToolUse": ({"matcher": "AskUserQuestion", "hooks": [dict(ask)]}, ASK_MODULE),
+            "PostToolUse": ({"matcher": "Bash", "hooks": [dict(commit)]}, COMMIT_MODULE)}
 
 
 def apply(settings: dict, python: str = sys.executable, uninstall: bool = False) -> dict:
     """The settings with our hooks added (or removed). Pure."""
     out = json.loads(json.dumps(settings))
     hooks = out.setdefault("hooks", {})
-    for event, entry in _wanted(python).items():
-        kept = [e for e in hooks.get(event, []) if not _ours(e)]
+    for event, (entry, module) in _wanted(python).items():
+        kept = [e for e in hooks.get(event, []) if not _ours(e, module)]
         if not uninstall:
             kept.append(entry)
         if kept:
@@ -71,7 +75,7 @@ def run(path: Path, uninstall: bool = False, python: str = sys.executable) -> st
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(after, indent=2) + "\n")
     os.replace(tmp, path)
-    return ("removed the ask hooks from " if uninstall else "installed the ask hooks in ") + str(path)
+    return ("removed the companion hooks from " if uninstall else "installed the companion hooks in ") + str(path)
 
 
 def main(argv: list[str] | None = None) -> int:
