@@ -141,10 +141,13 @@ corresponding feature is used:
   `~/.claude/session-companion-waiting/<pid>`. If that hook sends Web Push, it
   can also create `session-companion-vapid.json` and
   `session-companion-push.json` there.
-- `python -m claude_companion.server.install_hooks` adds its asks hooks to
+- `python -m claude_companion.server.install_hooks` adds its hooks to
   `~/.claude/settings.json` and first writes a timestamped
-  `~/.claude/settings.json.bak-...` backup. Its `--uninstall` option removes
-  only those asks hooks and also backs up the settings file when it changes it.
+  `~/.claude/settings.json.bak-...` backup: the asks hooks, and a
+  PostToolUse(Bash) hook that appends each `git commit` a session makes to
+  `commits.jsonl` in the app data directory (session id, folder, commit and
+  subject; nothing leaves the PC). Its `--uninstall` option removes only those
+  hooks and also backs up the settings file when it changes it.
 - `comms/install.sh` adds its Stop, SessionStart, and UserPromptSubmit hooks to
   `~/.claude/settings.json` and first writes a timestamped backup. It also
   registers the `tts` MCP server with `claude mcp add tts --scope user`; Claude
@@ -360,7 +363,7 @@ Run these commands from the repository root to remove the optional Claude Code
 integrations without changing unrelated hooks:
 
 ```bash
-# Asks hooks installed by install_hooks.py
+# Asks and commit hooks installed by install_hooks.py
 .venv/bin/python -m claude_companion.server.install_hooks --uninstall
 
 # Comms hooks and its user-scope tts MCP registration
