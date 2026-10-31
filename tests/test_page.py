@@ -14,7 +14,8 @@ OWNER = "o" * 64
 ROWS = [
     {"pid": 1, "name": "alpha", "project": "api", "title": "Rate limiter", "status": "busy", "waiting": False,
      "model": "claude-opus-5-5", "cost_usd": 3.21, "context_pct": 42.5, "last_reply": "Token bucket in place.",
-     "last_activity": 4, "cwd": "/w/api", "branch": "main", "child": False, "session_id": "s1"},
+     "last_activity": 4, "cwd": "/w/api", "branch": "main", "child": False, "session_id": "s1",
+     "bg_job_list": [{"cmd": "pytest <b>bad</b>", "age_s": 61}, {"cmd": "sleep 60", "age_s": 2}]},
     {"pid": 2, "name": "beta <b>x</b>", "project": "web", "title": "", "status": "idle", "waiting": True,
      "model": "claude-sonnet-5-5", "cost_usd": 0.5, "context_pct": 10, "last_reply": "x" * 400,
      "last_activity": 90, "cwd": "/w/web", "child": False, "session_id": "s2"},
@@ -80,6 +81,13 @@ def test_cards_render_without_horizontal_scroll(page):
     # Strings are escaped, never parsed as markup.
     assert page.locator(".scard b").count() == 0
     assert "beta <b>x</b>" in page.locator(".scard").nth(1).inner_text()
+
+
+def test_background_jobs_show_count_command_and_age(page):
+    page.wait_for_selector(".scard")
+    jobs = page.locator('.scard:has(h3:text-is("alpha")) .bg-jobs')
+    assert jobs.inner_text().splitlines() == ["2 jobs running", "pytest <b>bad</b>1m ago", "sleep 602s ago"]
+    assert page.locator('.scard:has(h3:text-is("beta")) .bg-jobs').count() == 0
 
 
 def test_waiting_session_shows_alert_badge_and_nav_count(page):

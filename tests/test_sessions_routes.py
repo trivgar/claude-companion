@@ -73,6 +73,22 @@ def test_sessions_rows_include_card_suggestions(env, monkeypatch):
     assert next(row for row in rows if row["name"] == "web-checkout")["unread"] is True
 
 
+def test_sessions_rows_include_background_jobs(env, monkeypatch):
+    from claude_companion.server import sessions
+
+    def annotate(rows):
+        for row in rows:
+            row["bg_job_list"] = [{"cmd": "pytest -q", "age_s": 120}] if row["name"] == "api-1" else []
+            row["bg_jobs"] = len(row["bg_job_list"])
+
+    monkeypatch.setattr(sessions.bgjobs, "annotate", annotate)
+    _, c = env
+    rows = c.get("/api/sessions", headers=KEY).json()
+    row = next(item for item in rows if item["name"] == "api-1")
+    assert row["bg_jobs"] == 1
+    assert row["bg_job_list"] == [{"cmd": "pytest -q", "age_s": 120}]
+
+
 def test_a_waiting_marker_shows_as_waiting(env):
     home, c = env
     pid = json.loads(next((home / "sessions").glob("*.json")).read_text())["pid"]

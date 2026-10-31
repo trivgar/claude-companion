@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from .. import clearline, config
+from .. import bgjobs, clearline, config
 from ..gitstate import GitState
 from ..limits import LimitsCache
 from ..reader import SessionReader, order
@@ -87,6 +87,7 @@ def _add_card_data(rows: list[dict]) -> None:
             row["suggestion"] = chat.suggestion(target) if target and chat.addons.chat_target(dict(target)) is True else None
         except Exception:
             row["suggestion"] = None
+    bgjobs.annotate(rows)
 
 
 @router.get("/api/usage", dependencies=[Depends(auth.require_token)])
