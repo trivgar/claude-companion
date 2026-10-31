@@ -38,6 +38,10 @@
     el.innerHTML = `
       <div id="chat-bar"><label class="dim" for="chat-to">Talk to</label><select id="chat-to"></select>
       <button type="button" class="act" id="chat-stop">Stop it</button>
+      <button type="button" class="act" id="chat-resume" hidden>Resume</button>
+      <button type="button" class="act" id="chat-end">End</button>
+      <button type="button" class="act" id="chat-clear" hidden>Clear</button>
+      <button type="button" class="act" id="chat-compact" hidden>Compact</button>
       <label class="dim"><input type="checkbox" id="chat-win"> its whole window</label></div>
       <div id="chat-controls"></div><div id="chat-asks"></div>
       <div id="chat-log" aria-live="polite"></div>
@@ -58,6 +62,10 @@
       try { const r = await CC.post(`/api/cave/stop/${encodeURIComponent(who)}`, {}); err.textContent = r.ok ? 'Stopped.' : 'Not stopped: ' + r.detail; }
       catch (e) { err.textContent = 'Not stopped: ' + e.message; }
     });
+    el.querySelector('#chat-resume').addEventListener('click', () => cardAction('resume'));
+    el.querySelector('#chat-end').addEventListener('click', () => cardAction('end'));
+    el.querySelector('#chat-clear').addEventListener('click', () => cardAction('clear'));
+    el.querySelector('#chat-compact').addEventListener('click', () => cardAction('compact'));
     el.querySelector('#chat-attach').addEventListener('click', () => el.querySelector('#chat-file').click());
     el.querySelector('#chat-file').addEventListener('change', e => {
       files = [...files, ...e.target.files].slice(0, 6);
@@ -66,6 +74,55 @@
     });
     el.addEventListener('click', actOnChat);
     el.querySelector('#chat-send').addEventListener('submit', send);
+  }
+
+  function selectedAgent() {
+    return agents.find(agent => agent.name === who) || null;
+  }
+
+  function identity(action) {
+    const target = selectedAgent();
+    const err = el.querySelector('#chat-err');
+    if (!target) {
+      err.textContent = `Not ${action}: pick a session first.`;
+      return null;
+    }
+    if (!Number.isInteger(target.pid) || !target.session_id) {
+      err.textContent = `Not ${action}: this session's details are unavailable. Refresh the page.`;
+      return null;
+    }
+    return target;
+  }
+
+  function setActionVisibility() {
+    const target = selectedAgent();
+    const idle = Boolean(target && target.status === 'idle' && !target.waiting);
+    el.querySelector('#chat-resume').hidden = !idle;
+    el.querySelector('#chat-clear').hidden = !idle;
+    el.querySelector('#chat-compact').hidden = !idle;
+  }
+
+  async function cardAction(action) {
+    const labels = {resume: 'resumed', end: 'ended', clear: 'cleared', compact: 'compacted'};
+    const target = identity(labels[action]);
+    if (!target) return;
+    if (action === 'end' && !confirm(`End ${target.name}? Its window closes.`)) return;
+    if (action === 'clear' && !confirm(`Clear ${target.name}? This wipes the session's context.`)) return;
+    const err = el.querySelector('#chat-err');
+    try {
+      let result;
+      if (action === 'resume' || action === 'end') {
+        result = await CC.post(`/api/cave/${action}/${encodeURIComponent(target.name)}`,
+          {pid: target.pid, session_id: target.session_id});
+      } else {
+        result = await CC.post('/api/cave/send', {to: target.name, text: action === 'clear' ? '/clear' : '/compact'});
+      }
+      err.textContent = result.ok ? labels[action][0].toUpperCase() + labels[action].slice(1) + '.' :
+        `Not ${labels[action]}: ${result.detail || 'refused'}`;
+    } catch (e) {
+      err.textContent = `Not ${labels[action]}: ${e.message}`;
+    }
+    await refresh();
   }
 
   function askCards(asks) {
@@ -145,6 +202,7 @@
     const select = el.querySelector('#chat-to');
     if (document.activeElement !== select) select.innerHTML = `<option value="">${names.length ? 'pick a session' : 'no session reachable'}</option>` +
       agents.map(a => `<option value="${esc(a.name)}"${a.name === who ? ' selected' : ''}>${esc(a.name)}${a.waiting ? ' (waiting)' : ''}${a.project ? ' · ' + esc(a.project) : ''}</option>`).join('');
+    setActionVisibility();
     const log = el.querySelector('#chat-log');
     let messages = data.messages || [];
     if (who && el.querySelector('#chat-win').checked) {

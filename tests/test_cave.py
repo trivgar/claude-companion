@@ -207,6 +207,23 @@ def test_suggest_route_uses_a_fresh_server_read_and_the_card_identity(monkeypatc
     assert chat.cave_suggest("Ada", {"pid": 99, "session_id": "s1", "words": "Review the change"}).status_code == 409
 
 
+@pytest.mark.parametrize(("action", "body"), [
+    ("resume", {"pid": 99, "session_id": "s1"}),
+    ("end", {"pid": 99, "session_id": "s1"}),
+    ("suggest", {"pid": 99, "session_id": "s1", "words": "Review the change"}),
+])
+def test_guarded_card_actions_reject_a_stale_pid_without_sending(monkeypatch, action, body):
+    target = KNOWN["ada"]
+    monkeypatch.setattr(chat, "_target", lambda name: target if name.lower() == "ada" else None)
+    sent = []
+    monkeypatch.setattr(chat, "send", lambda found, words: sent.append((found, words)) or (True, ""))
+
+    response = getattr(chat, f"cave_{action}")("Ada", body)
+
+    assert response.status_code == 409
+    assert sent == []
+
+
 def test_cave_addresses_keep_the_same_owner_and_write_guards(monkeypatch, tmp_path):
     """Route coverage is kept even though this sandbox does not run clients."""
     from fastapi.testclient import TestClient
@@ -215,12 +232,17 @@ def test_cave_addresses_keep_the_same_owner_and_write_guards(monkeypatch, tmp_pa
 
     owner = "o" * 64
     monkeypatch.setenv("CLAUDE_COMPANION_CHAT_LOG", str(tmp_path / "chat.jsonl"))
+    monkeypatch.setenv("CLAUDE_COMPANION_CLAUDE_HOME", str(tmp_path / "claude"))
+    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(tmp_path / "config.toml"))
+    monkeypatch.setenv("CLAUDE_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
     monkeypatch.setattr(server, "FEATURES", ["chat"])
     monkeypatch.setattr(chat, "known", lambda: KNOWN)
     monkeypatch.setattr(chat, "send", lambda target, text: (True, ""))
     client = TestClient(server.create_app(token="t" * 32, owner_key=owner))
     same = {"origin": "http://testserver", "host": "testserver", auth.OWNER_HEADER: owner}
     assert client.get("/api/cave").status_code == 401
+    agent = client.get("/api/cave", headers={auth.OWNER_HEADER: owner}).json()["agents"][0]
+    assert agent["pid"] == 11 and agent["session_id"] == "s1"
     assert client.post("/api/cave/send", json={"to": "Ada", "text": "hi"}, headers={auth.OWNER_HEADER: owner}).status_code == 403
     assert client.post("/api/cave/send", json={"to": "Ada", "text": "hi"}, headers=same).json()["ok"] is True
 
