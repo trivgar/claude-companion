@@ -14,16 +14,13 @@ import time
 CMD_LIMIT = 96
 _SNAPSHOT = re.compile(r"(?:^|/)shell-snapshots/snapshot-[^\s/]+\.sh")
 _EVAL = re.compile(r"\beval\s+('(?:[^']|'\"'\"')*')", re.S)
-# Anything after a credential-looking assignment, flag or header is dropped.
-# "_" counts as a separator, so GH_TOKEN=... and db_password=... match too.
-_SECRET = re.compile(
-    r"(?is)((?<![A-Za-z0-9])[A-Za-z0-9_]*(?:token|api[_-]?key|key|password|passwd|secret|auth|credential)"
-    r"[A-Za-z0-9_]*\s*(?:=|:)\s*|"
-    r"(?:^|\s)--?(?:[A-Za-z0-9-]*(?:token|password|passwd|secret|key|auth|user))(?:\s+|=)|"
-    r"(?:^|\s)(?:-H|--header|-u)(?:\s+|=)|"
-    r"\b(?:bearer|basic)\s+).*$"
-)
-_USERINFO = re.compile(r"(://)[^/@\s]+@")
+# A label keeps a command's words up to the first one that could carry a
+# credential, and drops everything from there: a name with a secret-ish word
+# in it (GH_TOKEN=, --api-token, password:), a credential short flag (-u, -p,
+# -H, attached or not), Bearer or Basic, or a URL with userinfo.
+SCAN_LIMIT = 2048
+_SECRET_WORD = re.compile(r"token|api[_-]?key|key|passw|pass\b|pwd|secret|auth|credential|cookie", re.I)
+_SECRET_FLAG = re.compile(r"-[upH]|--(?:header|user|pass)", re.I)
 
 
 def stat(proc: str, pid: int) -> tuple[int, int] | None:
@@ -69,10 +66,23 @@ def raw_command(command: list[str]) -> str:
     return words[1] if len(words) > 1 else ""
 
 
+def _risky(word: str) -> bool:
+    bare = word.strip("'\"")
+    if _SECRET_FLAG.match(bare) or bare.lower() in {"bearer", "basic"}:
+        return True
+    if "://" in bare and "@" in bare.split("://", 1)[1].split("/", 1)[0]:
+        return True
+    name = re.split(r"[=:]", bare, 1)[0] if re.search(r"[=:]", bare) else bare if bare.startswith("-") else ""
+    return bool(name and _SECRET_WORD.search(name))
+
+
 def redact(value: str) -> str:
     """Avoid returning command-line credentials through the dashboard API."""
-    value = _USERINFO.sub(r"\1[redacted]@", value)
-    return _SECRET.sub(lambda match: match.group(1) + "[redacted]", value)
+    words = value[:SCAN_LIMIT].split(" ")
+    for i, word in enumerate(words):
+        if _risky(word):
+            return " ".join(words[:i] + ["[redacted]"])
+    return " ".join(words)
 
 
 def command_of(command: list[str], limit: int = CMD_LIMIT) -> str:

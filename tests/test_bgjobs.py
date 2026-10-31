@@ -69,7 +69,15 @@ def test_redact_hides_underscored_names_flags_bearer_and_url_userinfo():
         "curl -u admin:pw2 https://x.test": "pw2",
         "curl -H 'Authorization: Bearer zzz' https://x.test": "zzz",
         "git clone https://user:pw3@example.com/r.git": "pw3",
+        "git clone https://u:a@b@example.com/r.git": "a@b",
+        "curl -uadmin:pw4 https://x.test": "pw4",
+        "mysql -ppw5 db": "pw5",
+        "tool --pass pw6": "pw6",
     }
     for command, secret in cases.items():
         assert secret not in bgjobs.redact(command), command
     assert bgjobs.redact("pytest -q tests") == "pytest -q tests"
+
+
+def test_redact_is_bounded_on_a_huge_command():
+    assert len(bgjobs.redact("a" * 100000)) <= bgjobs.SCAN_LIMIT
