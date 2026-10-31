@@ -14,10 +14,13 @@ OWNER = "o" * 64
 ROWS = [
     {"pid": 1, "name": "alpha", "project": "api", "title": "Rate limiter", "status": "busy", "waiting": False,
      "model": "claude-opus-5-5", "cost_usd": 3.21, "context_pct": 42.5, "last_reply": "Token bucket in place.",
-     "last_activity": 4, "cwd": "/w/api", "branch": "main", "child": False},
+     "last_activity": 4, "cwd": "/w/api", "branch": "main", "child": False, "session_id": "s1"},
     {"pid": 2, "name": "beta <b>x</b>", "project": "web", "title": "", "status": "idle", "waiting": True,
      "model": "claude-sonnet-5-5", "cost_usd": 0.5, "context_pct": 10, "last_reply": "x" * 400,
-     "last_activity": 90, "cwd": "/w/web", "child": False},
+     "last_activity": 90, "cwd": "/w/web", "child": False, "session_id": "s2"},
+    {"pid": 3, "name": "gamma", "project": "worker", "title": "", "status": "idle", "waiting": False,
+     "model": "claude-haiku-5-5", "cost_usd": 0.1, "context_pct": 5, "last_reply": "Ready.",
+     "last_activity": 10, "cwd": "/w/worker", "child": False, "session_id": "s3"},
 ]
 USAGE = {"five_hour": {"cost_usd": 1.5, "total_tokens": 1000}, "seven_day": {"cost_usd": 20, "total_tokens": 9000},
          "limits": {"available": False, "reason": "no credentials"}}
@@ -70,7 +73,7 @@ def page(base_url):
 
 def test_cards_render_without_horizontal_scroll(page):
     page.wait_for_selector(".scard")
-    assert page.locator(".scard").count() == 2
+    assert page.locator(".scard").count() == 3
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     # Strings are escaped, never parsed as markup.
     assert page.locator(".scard b").count() == 0
@@ -109,3 +112,39 @@ def test_a_failed_read_says_the_servers_reason(page):
     page.route("**/api/bare*", lambda r: r.fulfill(status=502, body="bad gateway"))
     msg = page.evaluate("CC.get('/api/bare').then(() => 'ok', e => e.message)")
     assert msg == "/api/bare: 502"
+
+
+@pytest.mark.parametrize(("action", "name", "path", "body"), [
+    ("stop", "alpha", "/api/cave/stop/alpha", {}),
+    ("resume", "gamma", "/api/cave/resume/gamma", {"pid": 3, "session_id": "s3"}),
+    ("compact", "gamma", "/api/cave/send", {"to": "gamma", "text": "/compact"}),
+    ("clear", "gamma", "/api/cave/send", {"to": "gamma", "text": "/clear"}),
+    ("end", "gamma", "/api/cave/end/gamma", {"pid": 3, "session_id": "s3"}),
+])
+def test_card_action_arms_then_posts(page, action, name, path, body):
+    calls = []
+
+    def cave(route):
+        calls.append((route.request.url, route.request.post_data_json))
+        route.fulfill(json={"ok": True, "detail": ""})
+
+    page.route("**/api/cave/**", cave)
+    button = page.locator(f'.scard:has(h3:text-is("{name}")) [data-card-action="{action}"]')
+    button.click()
+    assert button.inner_text() == f"Tap again to {action}"
+    assert calls == []
+
+    button.click()
+    page.locator(".action-result", has_text=action.capitalize() + ("ped." if action == "stop" else "")).wait_for(timeout=1000)
+    assert len(calls) == 1
+    assert calls[0][0].endswith(path)
+    assert calls[0][1] == body
+
+
+def test_a_single_card_action_tap_does_not_post(page):
+    calls = []
+    page.route("**/api/cave/**", lambda route: calls.append(route) or route.fulfill(json={"ok": True}))
+    button = page.locator('.scard:has(h3:text-is("gamma")) [data-card-action="clear"]')
+    button.click()
+    assert button.inner_text() == "Tap again to clear"
+    assert calls == []
