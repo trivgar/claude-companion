@@ -83,6 +83,15 @@
   }
   window.CC = {register, get, post, fetchAuthed, fetchWrite, esc, badge, show, key: () => key};
 
+  async function restartNotice() {
+    try {
+      const state = await get('/api/needs-restart');
+      const notice = document.getElementById('needs-restart');
+      notice.hidden = !state.needed;
+      if (state.needed) notice.querySelector('code').textContent = state.command || '';
+    } catch (e) {}
+  }
+
   async function boot() {
     if (!key) { showPair(''); return; }
     let feats = [];
@@ -90,6 +99,7 @@
       document.getElementById('views').innerHTML = `<p class="empty">Server not answering: ${esc(e.message)}</p>`;
       return;
     }
+    await restartNotice();
     const nav = document.getElementById('nav'), views = document.getElementById('views');
     for (const f of feats) {
       order.push(f.id);

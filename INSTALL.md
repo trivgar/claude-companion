@@ -138,6 +138,12 @@ systemctl --user enable --now claude-companion
 systemctl --user is-active claude-companion
 ```
 
+After updating the checkout, load the new dashboard code with:
+
+```bash
+systemctl --user restart claude-companion
+```
+
 ## Phone access with Tailscale
 
 The server listens on loopback by default. Tailscale can publish that local

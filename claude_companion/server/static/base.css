@@ -24,6 +24,7 @@ body { margin:0; background:var(--bg); color:var(--fg);
 header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line);
   padding:10px 16px 0; }
 header h1 { font-size:1.05rem; margin:0 0 6px; }
+#needs-restart { margin:0 0 6px; font-size:.85rem; }
 #strip { color:var(--dim); font-size:.8rem; min-height:1.2em; }
 #call { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
 #call .call-btn { min-height:38px; padding:0 12px; border:1px solid var(--line-strong); border-radius:8px;

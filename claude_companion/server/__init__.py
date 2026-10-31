@@ -17,11 +17,11 @@ import sys
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from .. import clearline, config
+from .. import clearline, config, restart
 from ..webpush import PushStore
 from . import auth, sessions
 from . import livecall
@@ -75,6 +75,7 @@ def create_app(token: str | None = None, owner_key: str | None = None) -> FastAP
     app.state.token = auth.load_or_create_token() if token is None else token
     app.state.owner_hashes = frozenset([auth.hash_secret(owner_key)] if owner_key else [])
     app.state.pair_failures = []
+    app.state.restart_check = restart.Check()
 
     @app.middleware("http")
     async def host_check(request: Request, call_next):
@@ -109,6 +110,10 @@ def create_app(token: str | None = None, owner_key: str | None = None) -> FastAP
     @app.get("/api/features")
     def features():
         return app.state.features
+
+    @app.get("/api/needs-restart", dependencies=[Depends(auth.require_token)])
+    def needs_restart():
+        return {"needed": app.state.restart_check.needed(), "command": restart.RESTART_COMMAND}
 
     @app.get("/")
     def page():
