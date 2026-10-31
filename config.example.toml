@@ -12,7 +12,11 @@ name = "you"
 app_name = "Companion"
 
 # Which features load, in nav order (leave out for all of them)
-# features = "sessions,asks,chat,mail,comms,voicelab,push"
+# features = "sessions,files,asks,chat,mail,comms,voicelab,push"
+
+# Projects the Files tab may browse and edit. Each value is a project root.
+# [projects]
+# example = "/path/to/project"
 
 # Where your sessions live and where the app keeps its own files
 # claude_home = "~/.claude"
