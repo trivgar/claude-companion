@@ -60,7 +60,33 @@ def sessions():
         r["branch"] = (g or {}).get("branch", "")
         r["clear_line"] = line
         r["needs_clear"] = clearline.over(r, line)
+    _add_card_data(rows)
     return rows
+
+
+def _add_card_data(rows: list[dict]) -> None:
+    """Put current chat-only facts on the rows without changing their identity."""
+    from . import chat
+
+    try:
+        targets = chat.targets(rows, chat.claude_home() / "sessions")
+    except Exception:
+        targets = {}
+    try:
+        seen_at = chat.seen()
+    except Exception:
+        seen_at = {}
+    for row in rows:
+        try:
+            row["unread"] = chat.unread(row, seen_at)
+        except Exception:
+            row["unread"] = False
+        name = str(row.get("speaker") or row.get("name") or "").lower()
+        target = targets.get(name)
+        try:
+            row["suggestion"] = chat.suggestion(target) if target and chat.addons.chat_target(dict(target)) is True else None
+        except Exception:
+            row["suggestion"] = None
 
 
 @router.get("/api/usage", dependencies=[Depends(auth.require_token)])

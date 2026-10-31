@@ -53,6 +53,26 @@ def test_sessions_rows_come_from_the_temp_home(env):
     assert "Fixed" in r["last_reply"]
 
 
+def test_sessions_rows_include_card_suggestions(env, monkeypatch):
+    from claude_companion.server import chat
+
+    def targets(rows, sessions_dir):
+        return {row["name"].lower(): {"name": row["name"], "pid": row["pid"], "pane": "%1",
+                                        "status": row["status"], "waiting": row["waiting"]} for row in rows}
+
+    monkeypatch.setattr(chat, "targets", targets)
+    monkeypatch.setattr(chat.addons, "chat_target", lambda target: True)
+    monkeypatch.setattr(chat, "suggestion", lambda target: "Review the status" if target["status"] == "idle" else None)
+    monkeypatch.setattr(chat, "seen", lambda: {})
+    monkeypatch.setattr(chat, "unread", lambda row, seen_at: row["name"] == "web-checkout")
+    _, c = env
+    rows = c.get("/api/sessions", headers=KEY).json()
+    idle = next(row for row in rows if row["status"] == "idle")
+    assert isinstance(idle["pid"], int) and idle["session_id"]
+    assert idle["suggestion"] == "Review the status"
+    assert next(row for row in rows if row["name"] == "web-checkout")["unread"] is True
+
+
 def test_a_waiting_marker_shows_as_waiting(env):
     home, c = env
     pid = json.loads(next((home / "sessions").glob("*.json")).read_text())["pid"]
