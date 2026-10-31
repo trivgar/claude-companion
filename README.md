@@ -56,6 +56,7 @@ real limits.
 **Restore.** A small local snapshot records each tmux-backed session every few
 minutes. After a reboot or crash, the Sessions tab lists missing sessions and
 can resume them in their old tmux names and folders.
+**New session.** Start Claude in a configured `[new_session]` folder with an optional first prompt; the page never accepts a path, and unavailable folders stay disabled.
 
 **Asks.** When a session wants permission to run something, or asks you a
 multiple-choice question, it shows up here with Allow and Deny. If the command

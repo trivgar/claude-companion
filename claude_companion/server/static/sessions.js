@@ -30,6 +30,7 @@
     .dot.busy { background:var(--busy); }
     .bar { height:4px; background:var(--sunk); border-radius:2px; margin-top:6px; }
     .bar i { display:block; height:100%; background:var(--dim); border-radius:2px; }
+    .new-session-button { margin:0 0 10px; }
     .bar.hot i { background:var(--alert); }`;
   document.head.appendChild(css);
 
@@ -149,6 +150,8 @@
     const seenAll = rowsOnPage.some(isUnread);
     const control = seenAll ? `<p class="sessions-seen-all"><button type="button" class="act" data-seen-all>Seen all</button>${seenAllError ? `<span class="faint" role="status">${esc(seenAllError)}</span>` : ''}</p>` : '';
     sessionsEl.innerHTML = restorePanel() + (rowsOnPage.length ? control + rowsOnPage.map(card).join('') : '<p class="empty">No live sessions.</p>');
+    const launcher = '<button type="button" class="act primary new-session-button" data-new-session>New session</button>';
+    sessionsEl.innerHTML = launcher + (rowsOnPage.length ? control + rowsOnPage.map(card).join('') : '<p class="empty">No live sessions.</p>');
   }
 
   function rememberResult(r, text) {
@@ -179,6 +182,9 @@
       restoreBusy = false;
       renderCards();
       setTimeout(() => { refresh().catch(() => {}); }, 600);
+    const launcher = event.target.closest('[data-new-session]');
+    if (launcher && sessionsEl && sessionsEl.contains(launcher)) {
+      if (window.CCNewSession) window.CCNewSession.open();
       return;
     }
     const seenAll = event.target.closest('[data-seen-all]');
