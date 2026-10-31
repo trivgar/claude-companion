@@ -22,10 +22,10 @@ app_name = "Companion"
 # deferred.md in data_dir.  Entries added from the dashboard use this label.
 # deferred_file = "~/.local/share/claude-companion/deferred.md"
 # deferred_by = "owner"
+
 # Restore snapshots: saved every five minutes by the optional user timer.
 # restore_snapshot_interval_min = 5
 # systemd_user_dir = "~/.config/systemd/user"
-
 # restore_python = "/path/to/your/venv/bin/python3"
 
 # A stuck ask (unanswered this long, while you are awake) alerts once
