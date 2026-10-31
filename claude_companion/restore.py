@@ -151,9 +151,8 @@ def snapshot(home: Path | None = None, directory: Path | None = None,
              now: float | None = None) -> dict:
     """Atomically save current sessions and preserve a sharp all-session loss.
 
-    A regular empty snapshot is still useful, but if it immediately follows a
-    snapshot of several sessions we also retain that larger list for a short
-    crash-recovery window.  The current snapshot always wins duplicate tmux
+    When none of the previous snapshot's several sessions are alive any more,
+    that larger list is also kept for a short crash-recovery window.  The current snapshot always wins duplicate tmux
     names when status is later assembled.
     """
     now = time.time() if now is None else now
@@ -162,8 +161,13 @@ def snapshot(home: Path | None = None, directory: Path | None = None,
     sessions = live_snapshot_sessions(home)
     saved = {"version": 1, "taken_at": now, "sessions": sessions}
     crash_saved = False
-    if not sessions and previous is not None:
+    if previous is not None:
         prior_rows = [row for row in previous.get("sessions", []) if _stored_session(row)]
+        # A crash is several sessions gone at once, whether or not a new one
+        # was started before this snapshot ran: none of the old names live on.
+        alive = {row["tmux"] for row in sessions}
+        if any(_tmux_session(row.get("tmux")) in alive for row in prior_rows):
+            prior_rows = []
         prior_taken = previous.get("taken_at")
         try:
             recent = 0 <= now - float(prior_taken) <= CRASH_GRACE_S
@@ -342,8 +346,11 @@ def _timer_text(interval_min: int) -> str:
         "Description=Save claude-companion session snapshots every few minutes",
         "",
         "[Timer]",
+        # OnUnitActiveSec alone never fires the first time: start it at boot
+        # and when the timer is enabled, then repeat.
+        "OnBootSec=1min",
+        "OnActiveSec=1min",
         f"OnUnitActiveSec={interval_min}min",
-        "Persistent=true",
         "",
         "[Install]",
         "WantedBy=timers.target",

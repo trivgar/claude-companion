@@ -87,6 +87,34 @@ def test_snapshot_is_atomic_private_and_keeps_a_recent_multi_session_crash_copy(
     assert json.loads((data / restore.CRASH_SNAPSHOT_NAME).read_text())["sessions"] == saved["sessions"]
 
 
+def test_a_crash_is_kept_though_a_new_session_started_first_and_not_while_one_survives(tmp_path, monkeypatch):
+    home, data = tmp_path / "claude", tmp_path / "data"
+    for name in ("one", "two", "three"):
+        (tmp_path / name).mkdir()
+    monkeypatch.setattr(restore, "_model_rows", lambda h: {})
+    _registry(home, "one", "sid-one", tmp_path / "one", 1)
+    _registry(home, "two", "sid-two", tmp_path / "two", 2)
+    restore.snapshot(home, data, now=1000)
+
+    for path in (home / "sessions").glob("*.json"):
+        path.unlink()
+    _registry(home, "three", "sid-three", tmp_path / "three", 3)
+    assert restore.snapshot(home, data, now=1001)["crash_saved"] is True
+
+    (data / restore.CRASH_SNAPSHOT_NAME).unlink()
+    _registry(home, "one", "sid-one", tmp_path / "one", 1)
+    restore.snapshot(home, data, now=1002)
+    for path in (home / "sessions").glob("*.json"):
+        if "sid-three" in path.read_text():
+            path.unlink()
+    assert restore.snapshot(home, data, now=1003)["crash_saved"] is False
+
+
+def test_the_timer_fires_at_boot_and_on_enable():
+    text = restore._timer_text(5)
+    assert "OnBootSec=" in text and "OnActiveSec=" in text and "OnUnitActiveSec=5min" in text
+
+
 def test_status_and_restore_use_fake_tmux_and_claude_on_path(tmp_path, fake_tools):
     state, log = fake_tools
     data = tmp_path / "data"
