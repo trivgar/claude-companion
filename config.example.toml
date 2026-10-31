@@ -14,10 +14,6 @@ app_name = "Companion"
 # Which features load, in nav order (leave out for all of them)
 # features = "sessions,files,asks,chat,mail,comms,voicelab,push"
 
-# Projects the Files tab may browse and edit. Each value is a project root.
-# [projects]
-# example = "/path/to/project"
-
 # Where your sessions live and where the app keeps its own files
 # claude_home = "~/.claude"
 # data_dir = "~/.local/share/claude-companion"
@@ -31,11 +27,6 @@ app_name = "Companion"
 # restore_snapshot_interval_min = 5
 # systemd_user_dir = "~/.config/systemd/user"
 # restore_python = "/path/to/your/venv/bin/python3"
-# The Sessions tab can start only these configured folders.  Each new Claude
-# runs in its own detached tmux session, in a user systemd scope when available.
-# [new_session]
-# default_model = "sonnet"
-# projects = [{ name = "api", path = "~/work/api" }, { name = "site", path = "~/work/site" }]
 
 # A stuck ask (unanswered this long, while you are awake) alerts once
 # ring_after_min = 30
@@ -83,3 +74,13 @@ app_name = "Companion"
 # Alex = ["{you}, got a question.", "Question for you, {you}.", "{you}. Need an answer."]
 # [approval_lines]
 # Alex = ["{you}, need your OK"]
+
+# Projects the Files tab may browse and edit. Each value is a project root.
+# [projects]
+# example = "/path/to/project"
+
+# The Sessions tab can start only these configured folders.  Each new Claude
+# runs in its own detached tmux session, in a user systemd scope when available.
+# [new_session]
+# default_model = "sonnet"
+# projects = [{ name = "api", path = "~/work/api" }, { name = "site", path = "~/work/site" }]

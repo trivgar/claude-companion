@@ -58,6 +58,7 @@ minutes. After a reboot or crash, the Sessions tab lists missing sessions and
 can resume them in their old tmux names and folders.
 
 **New session.** Start Claude in a configured `[new_session]` folder with an optional first prompt; the page never accepts a path, and unavailable folders stay disabled.
+
 **Files.** Browse configured project trees, open bounded text files and save an
 edit. Files git ignores, binary files and files over 1 MB stay out of the
 view. A save commits only that file when it was clean before the edit; it never
