@@ -1,5 +1,6 @@
 """The full direct-chat helpers behind the /api/cave contract."""
 import json
+from pathlib import Path
 
 import pytest
 
@@ -252,3 +253,10 @@ def test_a_target_without_its_cwd_degrades_to_empty(tmp_path):
     path = c.transcript_path({"pid": 1, "name": "Ada"}, tmp_path)
     assert not path.exists()
     assert c.replies(path, 0) == [] and c.effort(path) is None and c.conversation(path) == []
+
+
+def test_model_and_effort_picker_commands_use_the_four_second_two_tap_pattern():
+    source = (Path(__file__).resolve().parent.parent / "claude_companion/server/static/cave.js").read_text()
+    assert "const PICKER_ARM_MS = 4000" in source
+    assert "Tap again to switch to ${match[1]}" in source
+    assert "if (!pickerTap(command)) return;" in source

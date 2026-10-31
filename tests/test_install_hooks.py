@@ -23,6 +23,9 @@ def test_it_adds_both_hooks_after_a_backup_and_keeps_the_rest(tmp_path):
     assert got["hooks"]["PreToolUse"][1]["matcher"] == "AskUserQuestion"
     assert got["hooks"]["PreToolUse"][1]["hooks"][0]["command"] == cmd
     assert got["hooks"]["PermissionRequest"][0]["hooks"][0]["command"] == cmd
+    commit = got["hooks"]["PostToolUse"][0]
+    assert commit["matcher"] == "Bash"
+    assert commit["hooks"][0]["command"] == "/py -m claude_companion.hooks.commit_hook"
     baks = list(tmp_path.glob("settings.json.bak-*"))
     assert len(baks) == 1 and json.loads(baks[0].read_text())["model"] == "x"
 
@@ -44,6 +47,8 @@ def test_a_moved_python_replaces_our_entry_not_adds_a_second(tmp_path):
     got = json.loads(p.read_text())
     assert len(got["hooks"]["PermissionRequest"]) == 1
     assert got["hooks"]["PermissionRequest"][0]["hooks"][0]["command"].startswith("/new ")
+    assert len(got["hooks"]["PostToolUse"]) == 1
+    assert got["hooks"]["PostToolUse"][0]["hooks"][0]["command"].startswith("/new ")
 
 
 def test_uninstall_removes_only_ours(tmp_path):

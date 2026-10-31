@@ -27,13 +27,18 @@ def base(monkeypatch, tmp_path):
     monkeypatch.setenv("CLAUDE_COMPANION_CLAUDE_HOME", str(tmp_path / "claude"))
     monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(tmp_path / "config.toml"))
     monkeypatch.setenv("CLAUDE_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
+    monkeypatch.setenv("CLAUDE_COMPANION_CHAT_MODELS", "sample-model")
+    monkeypatch.setenv("CLAUDE_COMPANION_CHAT_EFFORTS", "high")
     monkeypatch.setattr(server, "FEATURES", ["asks", "chat"])
     target = {"name": "Ada", "pid": 1, "pane": "%1", "cwd": "/w/p", "session_id": "s1",
               "status": "idle", "waiting": False, "project": "p"}
     monkeypatch.setattr(chat, "known", lambda: {"ada": target})
     sent = []
     monkeypatch.setattr(chat, "send", lambda t, w, run=None: sent.append(w) or (True, ""))
-    s = socket.socket()
+    try:
+        s = socket.socket()
+    except PermissionError as exc:
+        pytest.skip(f"loopback socket unavailable: {exc}")
     s.bind(("127.0.0.1", 0))
     port = s.getsockname()[1]
     s.close()
@@ -111,6 +116,23 @@ def test_chat_sends_to_the_session_and_shows_it(base, page):
     assert sent == ["hello <i>there</i>"]
     assert "hello <i>there</i>" in page.inner_text(".msg.me"), "text, never markup"
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+
+
+@pytest.mark.parametrize(("command", "label"), [("/model sample-model", "sample-model"), ("/effort high", "high")])
+def test_chat_model_and_effort_picker_need_a_second_tap(base, page, command, label):
+    url, sent = base
+    page.goto(f"{url}/?view=chat")
+    page.wait_for_selector("#chat-to option[value=Ada]", state="attached")
+    page.check("#chat-win")
+    selector = f'#chat-controls [data-command="{command}"]'
+    page.wait_for_selector(selector)
+    page.fill("#chat-text", "draft")
+    page.click(selector)
+    assert page.inner_text(selector) == f"Tap again to switch to {label}"
+    assert sent == []
+    page.click(selector)
+    page.wait_for_function("document.querySelector('#chat-text').value === ''")
+    assert sent == [command]
 
 
 @pytest.mark.parametrize(("button", "path", "body", "status"), [
