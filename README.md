@@ -37,6 +37,9 @@ connection, are listed below.
 written for Windows with WSL2 and Ubuntu, and separates the core path from
 optional services.
 
+For PC-specific safeguards that are intentionally not shipped here, see
+[suggested features](docs/suggested-features.md).
+
 ## What it does
 
 The tabs, in the order they sit on the page. Turn any of them off with the
