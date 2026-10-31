@@ -18,6 +18,11 @@ app_name = "Companion"
 # claude_home = "~/.claude"
 # data_dir = "~/.local/share/claude-companion"
 
+# Shared deferred work and cross-project handoffs.  The default file is
+# deferred.md in data_dir.  Entries added from the dashboard use this label.
+# deferred_file = "~/.local/share/claude-companion/deferred.md"
+# deferred_by = "owner"
+
 # A stuck ask (unanswered this long, while you are awake) alerts once
 # ring_after_min = 30
 # ring_gap_min = 10

@@ -2,7 +2,7 @@
 
     python -m claude_companion.server.install_hooks [--uninstall] [--settings PATH]
 
-Adds the asks hooks and the commit-recording PostToolUse hook to
+Adds the asks hooks, deferred-handoff hooks, and the commit-recording PostToolUse hook to
 ~/.claude/settings.json (or $CLAUDE_HOME/settings.json) after a timestamped
 backup. Safe to run twice: when nothing would change, nothing is written and
 no backup is made. Other hooks are left exactly as they were.
@@ -19,8 +19,10 @@ from pathlib import Path
 
 ASK_MODULE = "claude_companion.hooks.permission_hook"
 COMMIT_MODULE = "claude_companion.hooks.commit_hook"
+DEFERRED_MODULE = "claude_companion.hooks.deferred_hook"
 TIMEOUT_S = 86400                    # the hook waits as long as the ask is open
 COMMIT_TIMEOUT_S = 5
+DEFERRED_TIMEOUT_S = 5
 
 
 def settings_path() -> Path:
@@ -35,9 +37,12 @@ def _ours(entry, module: str) -> bool:
 def _wanted(python: str) -> dict[str, tuple[dict, str]]:
     ask = {"type": "command", "command": f"{python} -m {ASK_MODULE}", "timeout": TIMEOUT_S}
     commit = {"type": "command", "command": f"{python} -m {COMMIT_MODULE}", "timeout": COMMIT_TIMEOUT_S}
+    deferred = {"type": "command", "command": f"{python} -m {DEFERRED_MODULE}", "timeout": DEFERRED_TIMEOUT_S}
     return {"PermissionRequest": ({"matcher": ".*", "hooks": [dict(ask)]}, ASK_MODULE),
             "PreToolUse": ({"matcher": "AskUserQuestion", "hooks": [dict(ask)]}, ASK_MODULE),
-            "PostToolUse": ({"matcher": "Bash", "hooks": [dict(commit)]}, COMMIT_MODULE)}
+            "PostToolUse": ({"matcher": "Bash", "hooks": [dict(commit)]}, COMMIT_MODULE),
+            "SessionStart": ({"matcher": ".*", "hooks": [dict(deferred)]}, DEFERRED_MODULE),
+            "UserPromptSubmit": ({"matcher": ".*", "hooks": [dict(deferred)]}, DEFERRED_MODULE)}
 
 
 def apply(settings: dict, python: str = sys.executable, uninstall: bool = False) -> dict:

@@ -177,9 +177,10 @@ enable browser push after opening it over the HTTPS Tailscale address.
 
 ## Optional components
 
-### Asks and chat hooks
+### Asks, chat, and deferred handoff hooks
 
-The asks installer writes its PermissionRequest and AskUserQuestion hooks to
+The installer writes its PermissionRequest and AskUserQuestion hooks plus
+SessionStart and UserPromptSubmit hooks for deferred handoffs to
 `~/.claude/settings.json` and makes a timestamped backup first:
 
 ```bash

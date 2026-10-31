@@ -14,7 +14,7 @@ def _settings(tmp_path, data):
     return p
 
 
-def test_it_adds_both_hooks_after_a_backup_and_keeps_the_rest(tmp_path):
+def test_it_adds_hooks_after_a_backup_and_keeps_the_rest(tmp_path):
     p = _settings(tmp_path, {"model": "x", "hooks": {"PreToolUse": [OTHER]}})
     ih.run(p, python="/py")
     got = json.loads(p.read_text())
@@ -26,6 +26,10 @@ def test_it_adds_both_hooks_after_a_backup_and_keeps_the_rest(tmp_path):
     commit = got["hooks"]["PostToolUse"][0]
     assert commit["matcher"] == "Bash"
     assert commit["hooks"][0]["command"] == "/py -m claude_companion.hooks.commit_hook"
+    for event in ("SessionStart", "UserPromptSubmit"):
+        hook = got["hooks"][event][0]
+        assert hook["matcher"] == ".*"
+        assert hook["hooks"][0]["command"] == "/py -m claude_companion.hooks.deferred_hook"
     baks = list(tmp_path.glob("settings.json.bak-*"))
     assert len(baks) == 1 and json.loads(baks[0].read_text())["model"] == "x"
 
@@ -49,6 +53,8 @@ def test_a_moved_python_replaces_our_entry_not_adds_a_second(tmp_path):
     assert got["hooks"]["PermissionRequest"][0]["hooks"][0]["command"].startswith("/new ")
     assert len(got["hooks"]["PostToolUse"]) == 1
     assert got["hooks"]["PostToolUse"][0]["hooks"][0]["command"].startswith("/new ")
+    assert len(got["hooks"]["SessionStart"]) == 1
+    assert got["hooks"]["SessionStart"][0]["hooks"][0]["command"].startswith("/new ")
 
 
 def test_uninstall_removes_only_ours(tmp_path):
