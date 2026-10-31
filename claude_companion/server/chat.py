@@ -828,7 +828,8 @@ def _rows() -> list[dict]:
 
 
 def _agents(k: dict[str, dict]) -> list[dict]:
-    return sorted(({"name": t["name"], "project": t["project"], "status": t["status"], "waiting": t["waiting"]}
+    return sorted(({"name": t["name"], "project": t["project"], "status": t["status"], "waiting": t["waiting"],
+                    "pid": t["pid"], "session_id": t.get("session_id") or ""}
                    for t in k.values()), key=lambda a: a["name"].lower())
 
 

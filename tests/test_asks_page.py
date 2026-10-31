@@ -1,7 +1,11 @@
 """The Asks and Chat tabs in a real browser at 390px (Playwright)."""
+import json
+import os
 import socket
 import threading
 import time
+from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -21,6 +25,8 @@ def base(monkeypatch, tmp_path):
     monkeypatch.setenv("CLAUDE_COMPANION_ASKS", str(tmp_path / "asks"))
     monkeypatch.setenv("CLAUDE_COMPANION_CHAT_LOG", str(tmp_path / "chat.jsonl"))
     monkeypatch.setenv("CLAUDE_COMPANION_CLAUDE_HOME", str(tmp_path / "claude"))
+    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(tmp_path / "config.toml"))
+    monkeypatch.setenv("CLAUDE_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
     monkeypatch.setattr(server, "FEATURES", ["asks", "chat"])
     target = {"name": "Ada", "pid": 1, "pane": "%1", "cwd": "/w/p", "session_id": "s1",
               "status": "idle", "waiting": False, "project": "p"}
@@ -105,6 +111,40 @@ def test_chat_sends_to_the_session_and_shows_it(base, page):
     assert sent == ["hello <i>there</i>"]
     assert "hello <i>there</i>" in page.inner_text(".msg.me"), "text, never markup"
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+
+
+@pytest.mark.parametrize(("button", "path", "body", "status"), [
+    ("#chat-resume", "/api/cave/resume/Ada", {"pid": 1, "session_id": "s1"}, "Resumed."),
+    ("#chat-end", "/api/cave/end/Ada", {"pid": 1, "session_id": "s1"}, "Ended."),
+    ("#chat-clear", "/api/cave/send", {"to": "Ada", "text": "/clear"}, "Cleared."),
+    ("#chat-compact", "/api/cave/send", {"to": "Ada", "text": "/compact"}, "Compacted."),
+])
+def test_chat_card_actions_post_the_selected_session_and_show_status(base, page, monkeypatch, button, path, body, status):
+    url, _ = base
+    if button == "#chat-resume":
+        target = chat.known()["ada"]
+        transcript = chat.transcript_path(target, Path(os.environ["CLAUDE_COMPANION_CLAUDE_HOME"]) / "projects")
+        transcript.parent.mkdir(parents=True, exist_ok=True)
+        transcript.write_text(json.dumps({"type": "user", "message": {
+            "content": "<command-name>/clear</command-name>"}}) + "\n")
+    if button == "#chat-end":
+        monkeypatch.setattr(chat.addons, "chat_action", lambda action, target, data: {"ok": True, "detail": ""})
+
+    posts = []
+
+    def capture(request):
+        if request.method == "POST" and urlparse(request.url).path == path:
+            posts.append(json.loads(request.post_data or "{}"))
+
+    page.on("request", capture)
+    page.goto(f"{url}/?view=chat")
+    page.wait_for_selector(button, state="visible")
+    if button in ("#chat-end", "#chat-clear"):
+        page.once("dialog", lambda dialog: dialog.accept())
+    page.click(button)
+    page.wait_for_function("document.querySelector('#chat-err').textContent === " + json.dumps(status))
+
+    assert posts == [body]
 
 
 def test_a_shortened_ask_needs_show_all_before_allow(base, page):
