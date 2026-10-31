@@ -58,3 +58,18 @@ def test_annotate_scans_all_public_rows_once(tmp_path, monkeypatch):
     assert rows[0]["bg_job_list"][0]["cmd"] == "pytest -q"
     assert rows[1] == {"pid": 102, "bg_jobs": 0, "bg_job_list": []}
     assert rows[2]["bg_jobs"] == 0 and rows[2]["bg_job_list"] == []
+
+
+def test_redact_hides_underscored_names_flags_bearer_and_url_userinfo():
+    cases = {
+        "GH_TOKEN=abc123 gh pr list": "abc123",
+        "DB_PASSWORD=hunter2 ./run": "hunter2",
+        "mytool --api-token s3cret": "s3cret",
+        "mysql --password=pw1 db": "pw1",
+        "curl -u admin:pw2 https://x.test": "pw2",
+        "curl -H 'Authorization: Bearer zzz' https://x.test": "zzz",
+        "git clone https://user:pw3@example.com/r.git": "pw3",
+    }
+    for command, secret in cases.items():
+        assert secret not in bgjobs.redact(command), command
+    assert bgjobs.redact("pytest -q tests") == "pytest -q tests"

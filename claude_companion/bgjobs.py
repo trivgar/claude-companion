@@ -14,10 +14,16 @@ import time
 CMD_LIMIT = 96
 _SNAPSHOT = re.compile(r"(?:^|/)shell-snapshots/snapshot-[^\s/]+\.sh")
 _EVAL = re.compile(r"\beval\s+('(?:[^']|'\"'\"')*')", re.S)
+# Anything after a credential-looking assignment, flag or header is dropped.
+# "_" counts as a separator, so GH_TOKEN=... and db_password=... match too.
 _SECRET = re.compile(
-    r"(?is)(\b(?:token|api[_-]?key|key|password|passwd|secret)\w*\b\s*(?:=|:)\s*|"
-    r"(?:^|\s)(?:-H|--header)(?:\s+|=)).*$"
+    r"(?is)((?<![A-Za-z0-9])[A-Za-z0-9_]*(?:token|api[_-]?key|key|password|passwd|secret|auth|credential)"
+    r"[A-Za-z0-9_]*\s*(?:=|:)\s*|"
+    r"(?:^|\s)--?(?:[A-Za-z0-9-]*(?:token|password|passwd|secret|key|auth|user))(?:\s+|=)|"
+    r"(?:^|\s)(?:-H|--header|-u)(?:\s+|=)|"
+    r"\b(?:bearer|basic)\s+).*$"
 )
+_USERINFO = re.compile(r"(://)[^/@\s]+@")
 
 
 def stat(proc: str, pid: int) -> tuple[int, int] | None:
@@ -65,6 +71,7 @@ def raw_command(command: list[str]) -> str:
 
 def redact(value: str) -> str:
     """Avoid returning command-line credentials through the dashboard API."""
+    value = _USERINFO.sub(r"\1[redacted]@", value)
     return _SECRET.sub(lambda match: match.group(1) + "[redacted]", value)
 
 
