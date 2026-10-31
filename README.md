@@ -59,6 +59,11 @@ can resume them in their old tmux names and folders.
 
 **New session.** Start Claude in a configured `[new_session]` folder with an optional first prompt; the page never accepts a path, and unavailable folders stay disabled.
 
+**Files.** Browse configured project trees, open bounded text files and save an
+edit. Files git ignores, binary files and files over 1 MB stay out of the
+view. A save commits only that file when it was clean before the edit; it never
+pushes.
+
 **Asks.** When a session wants permission to run something, or asks you a
 multiple-choice question, it shows up here with Allow and Deny. If the command
 was long and got shortened, the page makes you open the full text before it
@@ -155,6 +160,9 @@ corresponding feature is used:
   `~/.claude/session-companion-waiting/<pid>`. If that hook sends Web Push, it
   can also create `session-companion-vapid.json` and
   `session-companion-push.json` there.
+- The Files tab writes only a text file below a root you put in `[projects]`.
+  It writes beside the file and renames it, then commits only that file when it
+  was clean before the save. It never pushes.
 - `python -m claude_companion.server.install_hooks` adds its hooks to
   `~/.claude/settings.json` and first writes a timestamped
   `~/.claude/settings.json.bak-...` backup: the asks hooks, SessionStart and
@@ -353,6 +361,7 @@ hooks run outside any server's process.
 | `restore_snapshot_interval_min` | Snapshot timer cadence in minutes, 1 through 60; default 5 |
 | `systemd_user_dir` | Where the restore timer installer writes user units; default `~/.config/systemd/user` |
 | `restore_python` | Python executable the restore timer runs; default is the Python that installed it |
+| `[projects]` | Project-name-to-root table for the Files tab. Only these roots can be browsed or edited. |
 
 ### Helpers and background jobs
 
