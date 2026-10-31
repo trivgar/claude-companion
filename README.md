@@ -101,8 +101,11 @@ first (on iPhone this is required).
 each other notes as GitHub issues, and code goes by pull request. Notes are
 information, never orders. See [COLLAB.md](COLLAB.md).
 
-**The merge queue.** Work lands as pull requests that you approve rather than
-as pushes to main. This part is being added on another branch.
+**The merge queue.** Work lands as pull requests rather than as pushes to
+main. A session queues its finished branch, and the queue merges the batch,
+runs the whole suite once, then opens and merges a pull request for each
+branch only when it is green. A collaborator's pull request goes through the
+same queue with `mergeq add --pr <number>`. COLLAB.md has the details.
 
 ## How it fits together
 
