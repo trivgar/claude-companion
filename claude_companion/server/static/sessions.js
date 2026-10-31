@@ -105,7 +105,7 @@
     if (!jobs.length) return '';
     const count = jobs.length;
     const label = `${count} job${count === 1 ? '' : 's'} running`;
-    const lines = jobs.map(job => `<div class="bg-job"><code>${esc(job.cmd || 'shell job')}</code><time>${esc(ago(job.age_s))}</time></div>`).join('');
+    const lines = jobs.map(job => `<div class="bg-job"><code>${esc(job.cmd || 'shell job')}</code><time>${esc(ago(job.age_s).replace(' ago', ''))}</time></div>`).join('');
     return `<div class="bg-jobs"><div>${esc(label)}</div>${lines}</div>`;
   }
 

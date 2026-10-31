@@ -86,7 +86,12 @@ def test_cards_render_without_horizontal_scroll(page):
 def test_background_jobs_show_count_command_and_age(page):
     page.wait_for_selector(".scard")
     jobs = page.locator('.scard:has(h3:text-is("alpha")) .bg-jobs')
-    assert jobs.inner_text().splitlines() == ["2 jobs running", "pytest <b>bad</b>1m ago", "sleep 602s ago"]
+    assert jobs.locator("> div").first.inner_text() == "2 jobs running"
+    rows = jobs.locator(".bg-job")
+    assert rows.nth(0).locator("code").inner_text() == "pytest <b>bad</b>"
+    assert rows.nth(0).locator("time").inner_text() == "1m"
+    assert rows.nth(1).locator("code").inner_text() == "sleep 60"
+    assert rows.nth(1).locator("time").inner_text() == "2s"
     assert page.locator('.scard:has(h3:text-is("beta")) .bg-jobs').count() == 0
 
 
