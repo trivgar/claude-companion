@@ -4,7 +4,38 @@
 (function () {
   const esc = CC.esc;
   let el = null, who = '', agents = [], files = [];
+  const PICKER_ARM_MS = 4000;
+  let armedPicker = null;
   try { who = localStorage.getItem('cc-chat-to') || ''; } catch (e) {}
+
+  function disarmPicker() {
+    if (!armedPicker) return;
+    clearTimeout(armedPicker.timer);
+    const {button, was} = armedPicker;
+    armedPicker = null;
+    if (button.isConnected) {
+      button.removeAttribute('data-armed');
+      button.textContent = was;
+    }
+  }
+
+  function pickerTap(button) {
+    const match = /^\/(?:model|effort)\s+(.+)$/.exec(button.dataset.command || '');
+    if (!match) return true;
+    if (armedPicker && armedPicker.button === button && button.isConnected) {
+      disarmPicker();
+      return true;
+    }
+    disarmPicker();
+    armedPicker = {button, was: button.textContent, timer: setTimeout(disarmPicker, PICKER_ARM_MS)};
+    button.setAttribute('data-armed', '1');
+    button.textContent = `Tap again to switch to ${match[1]}`;
+    return false;
+  }
+
+  document.addEventListener('click', event => {
+    if (armedPicker && !armedPicker.button.contains(event.target)) disarmPicker();
+  }, true);
 
   const css = document.createElement('style');
   css.textContent = `
@@ -146,7 +177,12 @@
     const suggestion = event.target.closest('[data-suggestion]');
     if (suggestion) { el.querySelector('#chat-text').value = suggestion.dataset.suggestion; el.querySelector('#chat-text').focus(); return; }
     const command = event.target.closest('[data-command]');
-    if (command) { el.querySelector('#chat-text').value = command.dataset.command; await send(new Event('submit')); return; }
+    if (command) {
+      if (!pickerTap(command)) return;
+      el.querySelector('#chat-text').value = command.dataset.command;
+      await send(new Event('submit'));
+      return;
+    }
     const card = event.target.closest('[data-cave-ask]');
     if (!card) return;
     const id = card.dataset.caveAsk;
