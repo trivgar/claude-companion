@@ -23,7 +23,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .. import clearline, config, jobreaper, restart
 from ..webpush import PushStore
-from . import auth, sessions
+from . import auth, restore, sessions
 from . import livecall
 from .features import FEATURES
 
@@ -76,6 +76,7 @@ def create_app(token: str | None = None, owner_key: str | None = None) -> FastAP
     app.state.owner_hashes = frozenset([auth.hash_secret(owner_key)] if owner_key else [])
     app.state.pair_failures = []
     app.state.restart_check = restart.Check()
+    app.include_router(restore.router)
 
     @app.middleware("http")
     async def host_check(request: Request, call_next):
