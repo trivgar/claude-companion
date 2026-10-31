@@ -20,7 +20,8 @@ ROWS = [
      "last_activity": 90, "cwd": "/w/web", "child": False, "session_id": "s2"},
     {"pid": 3, "name": "gamma", "project": "worker", "title": "", "status": "idle", "waiting": False,
      "model": "claude-haiku-5-5", "cost_usd": 0.1, "context_pct": 5, "last_reply": "Ready.",
-     "last_activity": 10, "cwd": "/w/worker", "child": False, "session_id": "s3"},
+     "last_activity": 10, "cwd": "/w/worker", "child": False, "session_id": "s3",
+     "suggestion": "Review the compact example and confirm the checks still pass before continuing."},
 ]
 USAGE = {"five_hour": {"cost_usd": 1.5, "total_tokens": 1000}, "seven_day": {"cost_usd": 20, "total_tokens": 9000},
          "limits": {"available": False, "reason": "no credentials"}}
@@ -148,3 +149,24 @@ def test_a_single_card_action_tap_does_not_post(page):
     button.click()
     assert button.inner_text() == "Tap again to clear"
     assert calls == []
+
+
+def test_card_suggestion_arms_then_posts_its_original_words(page):
+    calls = []
+
+    def cave(route):
+        calls.append((route.request.url, route.request.post_data_json))
+        route.fulfill(json={"ok": True, "detail": ""})
+
+    page.route("**/api/cave/**", cave)
+    button = page.locator('.scard:has(h3:text-is("gamma")) [data-card-action="suggest"]')
+    assert button.inner_text() == "Send: Review the compact example and confirm the checks still pas…"
+    button.click()
+    assert button.inner_text() == "Tap again to send"
+    assert calls == []
+
+    button.click()
+    page.locator(".action-result", has_text="Sent.").wait_for(timeout=1000)
+    assert len(calls) == 1
+    assert calls[0][0].endswith("/api/cave/suggest/gamma")
+    assert calls[0][1] == {"pid": 3, "session_id": "s3", "words": ROWS[2]["suggestion"]}

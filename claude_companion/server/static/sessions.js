@@ -36,6 +36,10 @@
   const cardKey = r => `${String(r.pid || '')}:${String(r.session_id || '')}:${String(r.speaker || r.name || '')}`;
   const actionKey = (r, action) => `${action}:${cardKey(r)}`;
   const isArmed = (r, action) => (arms.get(actionKey(r, action)) || 0) > Date.now();
+  const suggestionLabel = words => {
+    const value = String(words || '').replace(/\s+/g, ' ').trim();
+    return value.length > 60 ? `${value.slice(0, 59)}…` : value;
+  };
 
   function actionResult(r) {
     const value = results.get(cardKey(r));
@@ -51,6 +55,11 @@
     return `<button type="button" class="act" data-card-action="${esc(action)}" data-name="${esc(r.speaker || r.name || '')}" data-pid="${esc(r.pid)}" data-session-id="${esc(r.session_id)}">${esc(armed ? `Tap again to ${action}` : label)}</button>`;
   }
 
+  function suggestionButton(r) {
+    const armed = isArmed(r, 'suggest');
+    return `<button type="button" class="act" data-card-action="suggest" data-words="${esc(r.suggestion)}">${esc(armed ? 'Tap again to send' : `Send: ${suggestionLabel(r.suggestion)}`)}</button>`;
+  }
+
   function actionRow(r) {
     const idle = r.status === 'idle' && !r.waiting;
     const actions = [
@@ -59,6 +68,7 @@
       idle ? actionButton(r, 'compact', 'Compact') : '',
       idle ? actionButton(r, 'clear', 'Clear') : '',
       actionButton(r, 'end', 'End'),
+      idle && r.suggestion ? suggestionButton(r) : '',
     ].filter(Boolean).join('');
     return actions ? `<div class="actions">${actions}</div>${actionResult(r)}` : '';
   }
@@ -129,10 +139,13 @@
     }
     arms.delete(actionKey(row, action));
     const name = String(row.speaker || row.name || '');
-    const verbs = {stop: 'stopped', resume: 'resumed', compact: 'compacted', clear: 'cleared', end: 'ended'};
+    const verbs = {stop: 'stopped', resume: 'resumed', compact: 'compacted', clear: 'cleared', end: 'ended', suggest: 'sent'};
     try {
       let result;
-      if (action === 'resume' || action === 'end') {
+      if (action === 'suggest') {
+        result = await CC.post(`/api/cave/suggest/${encodeURIComponent(name)}`,
+          {pid: row.pid, session_id: row.session_id, words: row.suggestion});
+      } else if (action === 'resume' || action === 'end') {
         result = await CC.post(`/api/cave/${action}/${encodeURIComponent(name)}`,
           {pid: row.pid, session_id: row.session_id});
       } else if (action === 'stop') {
