@@ -70,6 +70,17 @@
     if (seed & 1) pair(2, 2);                 // ears
     if (seed & 2) { pair(5, 0); pair(4, 1); } // antennae
     if (seed & 4) { pair(3, 9); pair(4, 9); } // feet
+    // A mirrored pattern inside the body and an optional mouth, from a second
+    // hash, so a crew of agents differs by shape and not only by colour.
+    const mark = hash(`${label}#`);
+    let bit = 0;
+    for (let y = 3; y <= 7; y++) {
+      for (let x = 3; x <= 5; x++) {
+        if (y === 4 && x === 4) { bit++; continue; }      // the eye's own cell
+        if ((mark >>> (bit++ % 30)) & 1) pair(x, y, ' identity-mark');
+      }
+    }
+    if (mark & (1 << 30)) { put(5, 6, ' identity-mouth'); put(6, 6, ' identity-mouth'); }
     put(4, 4, ' identity-eye');
     put(7, 4, ' identity-eye');
 
@@ -82,6 +93,8 @@
   const css = document.createElement('style');
   css.textContent = `
     .identity-sprite { color:hsl(var(--identity-hue) 62% 48%); display:block; flex:0 0 auto; height:1.7rem; width:1.7rem; }
+    .identity-sprite .identity-mark { fill:hsl(var(--identity-hue) 70% 32%); }
+    .identity-sprite .identity-mouth { fill:var(--raised); }
     .identity-sprite .identity-eye { fill:var(--raised); transform-box:fill-box; transform-origin:center; animation:cc-identity-blink 4.8s ease-in-out infinite; }
     .identity-label { align-items:center; display:inline-flex; gap:6px; min-width:0; }
     @keyframes cc-identity-blink { 0%, 93%, 100% { transform:scaleY(1); } 95%, 97% { transform:scaleY(.15); } }
