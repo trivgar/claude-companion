@@ -4,10 +4,14 @@
 'use strict';
 (function () {
   const esc = CC.esc;
+  const identity = window.CCIdentity;
   let el = null, sig = null, busy = false;
 
   function card(a) {
     const who = a.speaker || a.project || 'A session';
+    const title = a.speaker
+      ? `<span class="identity-label">${identity.sprite(a.speaker)}<span class="needs">${esc(who)}</span></span>`
+      : `<span class="needs">${esc(who)}</span>`;
     if (a.questions && a.questions.length) {
       const qs = a.questions.map((q, i) => `
         <fieldset class="q" data-q="${i}" data-multi="${q.multiSelect ? 1 : 0}" data-text="${esc(q.question)}">
@@ -16,7 +20,7 @@
             ${esc(o.label)}${o.description ? `<span class="faint"> ${esc(o.description)}</span>` : ''}</button>`).join(' ')}
         </fieldset>`).join('');
       return `<div class="card" data-ask="${esc(a.id)}">
-        <h3><span class="needs">${esc(who)}</span> asks</h3>${qs}
+        <h3 class="identity-heading">${title}<span>asks</span></h3>${qs}
         <p><button type="button" class="act primary send" disabled>Send answers</button></p>
         <p class="faint err" role="status"></p></div>`;
     }
@@ -25,7 +29,7 @@
       <pre class="full" hidden tabindex="0" style="max-height:40vh;overflow:auto;white-space:pre-wrap;word-break:break-word;margin:0 0 8px">${esc(a.input_full || '')}</pre>
       ${a.input_truncated ? '<p class="faint">Even the full view is cut at 20 KB.</p>' : ''}` : '';
     return `<div class="card" data-ask="${esc(a.id)}" data-short="${short ? 1 : 0}">
-      <h3><span class="needs">${esc(who)}</span> needs your OK</h3>
+      <h3 class="identity-heading">${title}<span>needs your OK</span></h3>
       <p><b>${esc(a.tool)}</b> <code>${esc(a.what)}</code></p>${more}
       <p><button type="button" class="act primary decide" data-d="allow"${short ? ' disabled' : ''}>Allow</button>
          <button type="button" class="act decide" data-d="deny">Deny</button></p>

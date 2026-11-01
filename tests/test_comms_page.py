@@ -67,6 +67,7 @@ def test_a_fresh_install_plays_piper_clips(setup):
         text = pg.inner_text("body")
         assert "not set up" not in text and "503" not in text
         assert "Juno" in text
+        assert pg.locator(".who .identity-sprite").count() == 1
         pg.click("#tts-toggle")
         for _ in range(100):
             if (clips / f"{cid}.played").exists():

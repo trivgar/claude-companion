@@ -11,6 +11,9 @@ name = "you"
 # What your install is called: page title, home screen, the phone app
 app_name = "Companion"
 
+# Pin a session sprite hue by display name (otherwise each name picks one).
+# sprite_overrides = { "build" = "#3b82f6" }
+
 # Which features load, in nav order (leave out for all of them)
 # features = "sessions,files,asks,chat,mail,comms,voicelab,push"
 

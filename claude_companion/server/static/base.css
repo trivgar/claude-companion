@@ -40,6 +40,7 @@ nav button .n { color:var(--alert); font-weight:700; margin-left:4px; }
 main { padding:12px 16px 80px; max-width:760px; margin:0 auto; }
 .card { background:var(--raised); border:1px solid var(--line); border-radius:8px; padding:12px; margin:0 0 10px; }
 .card h3 { margin:0 0 4px; font-size:1rem; }
+.identity-heading { align-items:center; display:flex; flex-wrap:wrap; gap:6px; }
 .dim { color:var(--dim); } .faint { color:var(--faint); font-size:.8rem; }
 .needs { color:var(--alert); font-weight:700; }
 button.act { min-height:44px; padding:0 16px; border-radius:8px; border:1px solid var(--line-strong);

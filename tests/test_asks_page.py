@@ -72,6 +72,7 @@ def test_a_permission_is_allowed_from_the_page_and_the_badge_counts(base, page):
     a = asks.create("Ada", "p", "s1", "Bash", {"command": "git push <b>x</b>"})
     page.goto(f"{url}/?view=asks")
     page.wait_for_selector(".card[data-ask]")
+    assert page.locator(".card[data-ask] .identity-sprite").count() == 1
     assert "git push <b>x</b>" in page.inner_text(".card code"), "text, never markup"
     assert page.inner_text('#nav button[data-id="asks"] .n') == "1"
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -110,6 +111,8 @@ def test_chat_sends_to_the_session_and_shows_it(base, page):
     url, sent = base
     page.goto(f"{url}/?view=chat")
     page.wait_for_selector("#chat-to option[value=Ada]", state="attached")
+    assert page.locator("#chat-title .identity-sprite").count() == 1
+    assert "Ada" in page.inner_text("#chat-title")
     page.fill("#chat-text", "hello <i>there</i>")
     page.click("#chat-send button")
     page.wait_for_selector(".msg.me")

@@ -13,6 +13,7 @@ import argparse
 import html
 import json as _json
 import logging
+import re
 import sys
 import time
 from pathlib import Path
@@ -31,15 +32,33 @@ from .gzip import GzipTextMiddleware
 
 STATIC = Path(__file__).resolve().parent / "static"
 log = logging.getLogger("claude_companion.server")
+_SPRITE_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
 def app_name() -> str:
     return str(config.get("app_name", "") or "").strip() or "Companion"
 
 
+def _sprite_overrides() -> dict[str, str]:
+    """The small, safe subset of config needed by the public page shell."""
+    value = config.get("sprite_overrides", {})
+    if not isinstance(value, dict):
+        return {}
+    return {str(name): color for name, color in value.items()
+            if isinstance(name, str) and isinstance(color, str) and _SPRITE_COLOR.fullmatch(color)}
+
+
+def _identity_config() -> str:
+    # This is embedded in a script tag, so JSON's normal output alone is not
+    # enough: protect the HTML parser from a configured display name too.
+    value = _json.dumps(_sprite_overrides(), ensure_ascii=False)
+    return "window.CC_IDENTITY_OVERRIDES=" + value.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026") + ";"
+
+
 def _named(path: Path, live_call: bool = False) -> str:
     return (path.read_text()
             .replace("{{APP_NAME}}", html.escape(app_name()))
+            .replace("{{IDENTITY_CONFIG}}", _identity_config())
             .replace("{{LIVE_CALL_BUTTON}}", '<span id="call"></span>' if live_call else "")
             .replace("{{LIVE_CALL_SCRIPT}}", '<script src="/static/call.js"></script>' if live_call else ""))
 
