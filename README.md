@@ -64,6 +64,8 @@ edit. Files git ignores, binary files and files over 1 MB stay out of the
 view. A save commits only that file when it was clean before the edit; it never
 pushes.
 
+**Specs.** Read design specs and plans from every configured project, including the usual `docs/superpowers/specs` and `docs/superpowers/plans` files plus optional project-relative `spec_globs`, without permitting edits.
+
 **Asks.** When a session wants permission to run something, or asks you a
 multiple-choice question, it shows up here with Allow and Deny. If the command
 was long and got shortened, the page makes you open the full text before it
@@ -364,6 +366,7 @@ hooks run outside any server's process.
 | `systemd_user_dir` | Where the restore timer installer writes user units; default `~/.config/systemd/user` |
 | `restore_python` | Python executable the restore timer runs; default is the Python that installed it |
 | `[projects]` | Project name to folder. The Files tab browses and edits only these; New session starts Claude only in these. |
+| `spec_globs` | Extra design-document globs relative to every `[projects]` root. Matches in a path containing `plan` are plans; other matches are specs. |
 | `[new_session]` | `default_model` for New session (an older `projects` list here is still read) |
 
 ### Helpers and background jobs
