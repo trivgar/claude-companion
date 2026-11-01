@@ -292,6 +292,14 @@
     mount(el) {
       sessionsEl = el;
       el.innerHTML = '<p class="empty">Loading sessions...</p>';
+      // The first start reads all of Claude Code's history: about a minute on
+      // 10 GB of transcripts (measured 2026-11-01). Say so rather than spin.
+      setTimeout(() => {
+        const p = el.querySelector('p.empty');
+        if (p && p.textContent === 'Loading sessions...') {
+          p.textContent = 'Reading your Claude Code history. The first start can take a minute on a long one.';
+        }
+      }, 4000);
       el.addEventListener('click', act);
     },
     refresh,
