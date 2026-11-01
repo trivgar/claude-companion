@@ -148,6 +148,42 @@ def _project_for(cwd: object, projects: list[tuple[str, Path]]) -> tuple[str, Pa
     return None
 
 
+REPO_RECHECK_SECONDS = 3600
+
+
+def _has_commit(repo: Path, sha: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), "cat-file", "-e", f"{sha}^{{commit}}"],
+            capture_output=True, stdin=subprocess.DEVNULL, timeout=10,
+            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return result.returncode == 0
+
+
+def _project_by_commit(sha: str, projects: list[tuple[str, Path]], known: dict,
+                       now: float) -> tuple[str, Path] | None:
+    """A commit made in a worktree (often removed since) belongs to the project
+    whose repository has it: worktrees share their main checkout's objects.
+    Answers are cached in ``known``; a miss is asked again after an hour."""
+    roots = dict(projects)
+    hit = known.get(sha)
+    if isinstance(hit, dict):
+        name = hit.get("project")
+        if name in roots:
+            return name, roots[name]
+        if not name and now - float(hit.get("checked_at") or 0) < REPO_RECHECK_SECONDS:
+            return None
+    for name, root in projects:
+        if _has_commit(root, sha):
+            known[sha] = {"project": name, "checked_at": now}
+            return name, root
+    known[sha] = {"project": "", "checked_at": now}
+    return None
+
+
 def _records(path: Path) -> list[dict]:
     """First hook row for each commit wins, so hook retries do not count twice."""
     try:
@@ -360,9 +396,12 @@ def summary(now: float | None = None, base: Path | None = None, projects: list[t
     cache = _read_json(locations["cache"], {})
     scores = cache.get("scores") if isinstance(cache.get("scores"), dict) else {}
     allowed = _configured(projects)
+    repos = cache.get("repos") if isinstance(cache.get("repos"), dict) else {}
+    repos_before = json.dumps(repos, sort_keys=True)
     rows, skipped = [], []
     for record in _records(locations["commits"]):
-        project = _project_for(record["cwd"], allowed)
+        project = (_project_for(record["cwd"], allowed)
+                   or _project_by_commit(record["sha"], allowed, repos, now))
         if project is None:
             skipped.append({"sha": record["sha"], "subject": record["subject"],
                             "reason": "not in a configured project"})
@@ -395,8 +434,8 @@ def summary(now: float | None = None, base: Path | None = None, projects: list[t
             scores[row["sha"]] = score
             row["score"] = score
             refreshed += 1
-    if refreshed:
-        _write_json(locations["cache"], {"scores": scores})
+    if refreshed or json.dumps(repos, sort_keys=True) != repos_before:
+        _write_json(locations["cache"], {"scores": scores, "repos": repos})
 
     names = {str(key): str(value) for key, value in (session_names or {}).items() if value}
     marked = marks(base)

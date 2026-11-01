@@ -125,3 +125,28 @@ def test_scoreboard_routes_use_owner_read_and_same_origin_write_guards():
     mark_route = next(item for item in route.router.routes if item.path == "/api/scoreboard/mark" and "POST" in item.methods)
     assert get_route.dependencies[0].dependency is auth.require_token
     assert mark_route.dependencies[0].dependency is auth.require_write
+
+
+def test_a_commit_from_a_removed_worktree_is_scored_in_its_project(tmp_path, repository):
+    first_at = NOW - 3 * 86400
+    _commit(repository, "base\n", "base", first_at - 60)
+    tree = tmp_path / "trees" / "feature"
+    _git(repository, "worktree", "add", "-q", "-b", "feature", str(tree))
+    (tree / "work.txt").write_text("one\ntwo\n")
+    _git(tree, "add", "work.txt")
+    env = {**os.environ, "GIT_AUTHOR_DATE": f"@{int(first_at)}", "GIT_COMMITTER_DATE": f"@{int(first_at)}"}
+    _git(tree, "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-m", "feature", env=env)
+    sha = _git(tree, "rev-parse", "HEAD")
+    _git(repository, "merge", "-q", "--ff-only", "feature")
+    _git(repository, "worktree", "remove", str(tree))
+    _commit(repository, "one\nchanged\n", "rework", first_at + 3600)
+    base = tmp_path / "data"
+    _log(base, tree, sha, first_at)
+
+    result = scoreboard.summary(now=NOW, base=base, projects=[("demo", str(repository))])
+
+    assert result["skipped_count"] == 0
+    row = _row(result)
+    assert row["commits"] == 1 and row["lines_reworked"] == 1
+    cached = json.loads((base / "scoreboard-cache.json").read_text())
+    assert cached["repos"][sha]["project"] == "demo"
