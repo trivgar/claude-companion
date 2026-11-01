@@ -244,7 +244,21 @@
     setTimeout(() => { refresh().catch(() => {}); }, 1200);
   }
 
-  function strip(u) {
+  function machineStrip(health) {
+    if (!health || typeof health !== 'object') return '';
+    const cpu = health.cpu || {}, temp = health.temperature || {};
+    const root = Array.isArray(health.disks) ? health.disks.find(d => d && d.path === '/') : null;
+    const bits = [];
+    if (Number.isFinite(cpu.percent)) bits.push(`CPU ${Math.round(cpu.percent)}%`);
+    else if (cpu.reason) bits.push(`CPU: ${cpu.reason}`);
+    // A missing temperature is explained on the Machine tab, not on every strip.
+    if (Number.isFinite(temp.c)) bits.push(`${Math.round(temp.c)}C`);
+    if (root && Number.isFinite(root.percent)) bits.push(`disk ${Math.round(root.percent)}%`);
+    else if (root && root.reason) bits.push(`disk: ${root.reason}`);
+    return bits.join(' · ');
+  }
+
+  function strip(u, health) {
     const f = u.five_hour || {}, s = u.seven_day || {}, l = u.limits || {}, c = u.codex || {};
     const bits = [`5h ${money(f.cost_usd)}`, `7d ${money(s.cost_usd)}`];
     if (l.available) {
@@ -258,13 +272,16 @@
       ].filter(Boolean);
       if (codex.length) bits.push(`Codex ${codex.join(' · ')}${c.age_seconds != null ? ` (as of ${ago(c.age_seconds)})` : ''}`);
     } else if (c.enabled && c.reason) bits.push(`Codex: ${c.reason}`);
+    const machine = machineStrip(health);
+    if (machine) bits.push(machine);
     document.getElementById('strip').textContent = bits.join(' | ');
   }
 
   async function refresh() {
-    const [rows, usage, restore] = await Promise.all([
-      CC.get('/api/sessions'), CC.get('/api/usage').catch(() => null), CC.get('/api/restore').catch(() => null)]);
-    if (usage) strip(usage);
+    const [rows, usage, restore, health] = await Promise.all([
+      CC.get('/api/sessions'), CC.get('/api/usage').catch(() => null), CC.get('/api/restore').catch(() => null),
+      CC.get('/api/health').catch(() => null)]);
+    if (usage || health) strip(usage || {}, health);
     restoreState = restore;
     CC.badge('sessions', rows.filter(r => r.waiting).length);
     rowsOnPage = rows;
