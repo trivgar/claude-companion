@@ -21,6 +21,8 @@ TITLE = "Specs"
 router = APIRouter()
 
 MAX_BYTES = 1024 * 1024
+HEAD_BYTES = 4096        # a title is read from this much; the list never reads whole files
+MAX_DOCS = 500           # a broad spec_globs entry cannot turn the list into a disk walk
 DEFAULT_GLOBS = (("docs/superpowers/specs/*.md", "spec"),
                  ("docs/superpowers/plans/*.md", "plan"))
 _HEADING = re.compile(r"^\s{0,3}#{1,6}[ \t]+(.+?)\s*#*\s*$")
@@ -81,6 +83,19 @@ def _snapshot(path: Path) -> tuple[str, os.stat_result] | None:
     return raw.decode("utf-8", "replace"), after
 
 
+def _head(path: Path) -> tuple[str, os.stat_result] | None:
+    """The start of a listable document, for its title."""
+    try:
+        stat = path.stat()
+        if stat.st_size > MAX_BYTES:
+            return None
+        with path.open("rb") as handle:
+            raw = handle.read(HEAD_BYTES)
+    except OSError:
+        return None
+    return raw.decode("utf-8", "replace"), stat
+
+
 def _title(text: str, filename: str) -> str:
     """The first Markdown heading, or the filename when no heading exists."""
     for line in text.splitlines():
@@ -131,7 +146,9 @@ def _documents_for(name: str, root: Path) -> list[dict]:
             if relative in found:
                 continue
             found.add(relative)
-            snap = _snapshot(path)
+            if len(out) >= MAX_DOCS:
+                return out
+            snap = _head(path)
             if snap is None:
                 continue
             text, stat = snap
