@@ -9,11 +9,15 @@ ASGIApp = Callable[[dict, Callable, Callable], Awaitable[None]]
 Send = Callable[[dict], Awaitable[None]]
 
 MINIMUM_SIZE = 1024
+BUFFER_LIMIT = 2 * 1024 * 1024     # a chunked text file up to this is gathered whole
 TEXT_TYPES = frozenset({
     "text/html",
     "text/css",
     "text/plain",
     "application/javascript",
+    "text/javascript",
+    "image/svg+xml",
+    "application/manifest+json",
     "application/json",
 })
 NO_BODY_STATUSES = frozenset({204, 205, 206, 304})
@@ -68,6 +72,22 @@ def _can_compress(start: dict, body: bytes, minimum_size: int) -> bool:
     )
 
 
+def _declared_length(headers: list[tuple[bytes, bytes]]) -> int | None:
+    values = _header_values(headers, "content-length")
+    try:
+        return int(values[-1]) if values else None
+    except ValueError:
+        return None
+
+
+def _gatherable(start: dict, minimum_size: int) -> bool:
+    """A file sent in chunks (static JS, CSS) with a known, bounded length.
+    A stream has no Content-Length and is never gathered."""
+    length = _declared_length(start.get("headers", []))
+    return (length is not None and minimum_size <= length <= BUFFER_LIMIT
+            and _can_compress(start, b"x" * minimum_size, minimum_size))
+
+
 def _compressed_start(start: dict, length: int) -> dict:
     headers = [(key, value) for key, value in start.get("headers", [])
                if key.lower() not in {b"content-length", b"content-encoding"}]
@@ -84,9 +104,9 @@ def _compressed_start(start: dict, length: int) -> dict:
 class GzipTextMiddleware:
     """A small ASGI middleware for finite, whitelisted text responses.
 
-    It waits for one response body so it can make a decision using the real
-    byte length. A body sent in multiple chunks is a stream and passes through
-    unchanged.
+    It decides on the whole body. A file sent in chunks with a declared length
+    of at most BUFFER_LIMIT (static JS and CSS) is gathered first; chunks with
+    no length are a stream and pass through unchanged.
     """
 
     def __init__(self, app: ASGIApp, minimum_size: int = MINIMUM_SIZE, level: int = 5):
@@ -100,9 +120,10 @@ class GzipTextMiddleware:
             return
 
         start: dict | None = None
+        gathered: list[bytes] | None = None
 
         async def wrapped(message: dict) -> None:
-            nonlocal start
+            nonlocal start, gathered
             if message["type"] == "http.response.start":
                 start = message
                 return
@@ -116,6 +137,14 @@ class GzipTextMiddleware:
                 return
 
             body = message.get("body", b"")
+            if gathered is None and message.get("more_body") and _gatherable(start, self.minimum_size):
+                gathered = []
+            if gathered is not None:
+                gathered.append(body)
+                if message.get("more_body"):
+                    return
+                body, gathered = b"".join(gathered), None
+                message = {**message, "body": body}
             if message.get("more_body") or not _can_compress(start, body, self.minimum_size):
                 await send(start)
                 start = None

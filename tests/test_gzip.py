@@ -91,3 +91,32 @@ def test_compressed_content_length_matches_body():
     body = b"x" * 2048
     start, response = _call(_response("text/css", body))
     assert int(_headers(start)["content-length"]) == len(response["body"])
+
+
+def _chunked(content_type, chunks, *, length=True):
+    total = sum(len(c) for c in chunks)
+    async def app(scope, receive, send):
+        headers = [(b"content-type", content_type.encode())]
+        if length:
+            headers.append((b"content-length", str(total).encode()))
+        await send({"type": "http.response.start", "status": 200, "headers": headers})
+        for i, chunk in enumerate(chunks):
+            await send({"type": "http.response.body", "body": chunk, "more_body": i < len(chunks) - 1})
+    return app
+
+
+@pytest.mark.parametrize("content_type", ["application/javascript", "text/javascript; charset=utf-8"])
+def test_a_static_file_sent_in_chunks_is_gathered_and_gzipped(content_type):
+    chunks = [b"console.log(1);\n" * 300, b"console.log(2);\n" * 300, b""]
+    sent = _call(_chunked(content_type, chunks))
+    assert len(sent) == 2
+    assert _headers(sent[0])["content-encoding"] == "gzip"
+    assert gzip.decompress(sent[1]["body"]) == b"".join(chunks)
+    assert _headers(sent[0])["content-length"] == str(len(sent[1]["body"]))
+
+
+def test_chunks_without_a_length_pass_through_as_a_stream():
+    chunks = [b"a" * 2000, b"b" * 2000, b""]
+    sent = _call(_chunked("text/plain", chunks, length=False))
+    assert "content-encoding" not in _headers(sent[0])
+    assert [m["body"] for m in sent[1:]] == chunks
