@@ -11,8 +11,8 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from claude_companion.reader import SessionReader, order  # noqa: E402
-from claude_companion.usage import UsageIndex  # noqa: E402
+from agent_companion.reader import SessionReader, order  # noqa: E402
+from agent_companion.usage import UsageIndex  # noqa: E402
 
 DOT = {"busy": "\033[33m●\033[0m", "idle": "\033[2m○\033[0m"}
 

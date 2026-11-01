@@ -1,13 +1,13 @@
-from claude_companion import newsession, projects
-from claude_companion.server import files
+from agent_companion import newsession, projects
+from agent_companion.server import files
 
 
 def _config(tmp_path, monkeypatch, text):
     path = tmp_path / "config.toml"
     path.write_text(text)
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(path))
-    monkeypatch.delenv("CLAUDE_COMPANION_PROJECTS", raising=False)
-    monkeypatch.delenv("CLAUDE_COMPANION_NEW_SESSION", raising=False)
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(path))
+    monkeypatch.delenv("AGENT_COMPANION_PROJECTS", raising=False)
+    monkeypatch.delenv("AGENT_COMPANION_NEW_SESSION", raising=False)
 
 
 def test_one_projects_table_feeds_files_and_the_launcher(tmp_path, monkeypatch):

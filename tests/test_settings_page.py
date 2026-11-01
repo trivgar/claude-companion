@@ -5,8 +5,8 @@ import pytest
 pytest.importorskip("fastapi")
 sync_api = pytest.importorskip("playwright.sync_api")
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import auth  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import auth  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
@@ -22,13 +22,13 @@ def base_url(tmp_path_factory):
     (d / "tts").mkdir()
     (d / "tts" / "cast.tsv").write_text("Juno\ten_US-amy-medium\nWren\ten_GB-alba-medium\n")
     (d / "config.toml").write_text('collab_repo = "example/app"\nname = "alex"\n')
-    env = {"CLAUDE_COMPANION_TTS_DIR": str(d / "tts"), "COMMS_STATE_DIR": str(d / "state"),
-           "COMMS_CLIPS_DIR": str(d / "clips"), "CLAUDE_COMPANION_CONFIG": str(d / "config.toml"),
-           "CLAUDE_COMPANION_OWNER_KEYS": str(d / "owner-keys.json"), "HOME": str(d / "home")}
+    env = {"AGENT_COMPANION_TTS_DIR": str(d / "tts"), "COMMS_STATE_DIR": str(d / "state"),
+           "COMMS_CLIPS_DIR": str(d / "clips"), "AGENT_COMPANION_CONFIG": str(d / "config.toml"),
+           "AGENT_COMPANION_OWNER_KEYS": str(d / "owner-keys.json"), "HOME": str(d / "home")}
     old = {k: os.environ.get(k) for k in (*env, "COMMS_DATA_DIR", "PIPER_BIN")}
     os.environ.update(env)
     os.environ.pop("COMMS_DATA_DIR", None)
-    from claude_companion.server import settings as settings_mod
+    from agent_companion.server import settings as settings_mod
     old_which, settings_mod._which = settings_mod._which, (lambda name: None)
     os.environ.pop("PIPER_BIN", None)
     auth.add_device("phone", OWNER)

@@ -1,7 +1,7 @@
 import json
 import signal
 
-from claude_companion import bgjobs, jobreaper
+from agent_companion import bgjobs, jobreaper
 
 
 def _proc(tmp_path):

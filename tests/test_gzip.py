@@ -3,7 +3,7 @@ import gzip
 
 import pytest
 
-from claude_companion.server.gzip import GzipTextMiddleware
+from agent_companion.server.gzip import GzipTextMiddleware
 
 
 async def _receive():

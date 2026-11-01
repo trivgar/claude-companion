@@ -2,7 +2,7 @@
 # the tests keep away from the real state.
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 TTS_DIR=${TTS_DIR:-$HERE}
-DATA=${COMMS_DATA_DIR:-$HOME/.local/share/claude-companion}
+DATA=${COMMS_DATA_DIR:-$HOME/.local/share/agent-companion}
 STATE=${COMMS_STATE_DIR:-$DATA/comms}
 CLIPS=${COMMS_CLIPS_DIR:-$DATA/clips}
 VOICES=${PIPER_VOICES:-$DATA/piper/voices}

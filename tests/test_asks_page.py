@@ -13,8 +13,8 @@ pytest.importorskip("fastapi")
 sync_api = pytest.importorskip("playwright.sync_api")
 import uvicorn  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import asks, chat  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import asks, chat  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
@@ -22,13 +22,13 @@ OWNER = "o" * 64
 
 @pytest.fixture
 def base(monkeypatch, tmp_path):
-    monkeypatch.setenv("CLAUDE_COMPANION_ASKS", str(tmp_path / "asks"))
-    monkeypatch.setenv("CLAUDE_COMPANION_CHAT_LOG", str(tmp_path / "chat.jsonl"))
-    monkeypatch.setenv("CLAUDE_COMPANION_CLAUDE_HOME", str(tmp_path / "claude"))
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(tmp_path / "config.toml"))
-    monkeypatch.setenv("CLAUDE_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
-    monkeypatch.setenv("CLAUDE_COMPANION_CHAT_MODELS", "sample-model")
-    monkeypatch.setenv("CLAUDE_COMPANION_CHAT_EFFORTS", "high")
+    monkeypatch.setenv("AGENT_COMPANION_ASKS", str(tmp_path / "asks"))
+    monkeypatch.setenv("AGENT_COMPANION_CHAT_LOG", str(tmp_path / "chat.jsonl"))
+    monkeypatch.setenv("AGENT_COMPANION_CLAUDE_HOME", str(tmp_path / "claude"))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(tmp_path / "config.toml"))
+    monkeypatch.setenv("AGENT_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
+    monkeypatch.setenv("AGENT_COMPANION_CHAT_MODELS", "sample-model")
+    monkeypatch.setenv("AGENT_COMPANION_CHAT_EFFORTS", "high")
     monkeypatch.setattr(server, "FEATURES", ["asks", "chat"])
     target = {"name": "Ada", "pid": 1, "pane": "%1", "cwd": "/w/p", "session_id": "s1",
               "status": "idle", "waiting": False, "project": "p"}
@@ -148,7 +148,7 @@ def test_chat_card_actions_post_the_selected_session_and_show_status(base, page,
     url, _ = base
     if button == "#chat-resume":
         target = chat.known()["ada"]
-        transcript = chat.transcript_path(target, Path(os.environ["CLAUDE_COMPANION_CLAUDE_HOME"]) / "projects")
+        transcript = chat.transcript_path(target, Path(os.environ["AGENT_COMPANION_CLAUDE_HOME"]) / "projects")
         transcript.parent.mkdir(parents=True, exist_ok=True)
         transcript.write_text(json.dumps({"type": "user", "message": {
             "content": "<command-name>/clear</command-name>"}}) + "\n")
@@ -208,7 +208,7 @@ def test_an_unpaired_device_is_told_how_to_pair(base):
         pg = b.new_page(viewport={"width": 390, "height": 800})
         pg.goto(f"{url}/?view=asks")
         pg.wait_for_selector("section.pair")
-        assert "python -m claude_companion.server pair" in pg.inner_text("section.pair")
+        assert "python -m agent_companion.server pair" in pg.inner_text("section.pair")
         b.close()
 
 
@@ -218,12 +218,12 @@ def test_the_page_sends_the_key_as_a_header_never_in_the_url(base, page):
     page.on("request", lambda r: seen.append((r.url, r.headers)) if "/api/asks" in r.url else None)
     page.goto(f"{url}/?view=asks")
     page.wait_for_selector("section[data-id=asks] .empty")
-    assert seen and all(h.get("x-claude-companion-key") == OWNER and OWNER not in u for u, h in seen)
+    assert seen and all(h.get("x-agent-companion-key") == OWNER and OWNER not in u for u, h in seen)
 
 
 def test_pairing_in_the_browser_stores_a_key_that_works(base, monkeypatch, tmp_path):
     url, _ = base
-    from claude_companion.server import auth
+    from agent_companion.server import auth
     code = auth.make_pairing_code("phone")
     with sync_api.sync_playwright() as p:
         try:

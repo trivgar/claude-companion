@@ -1,7 +1,7 @@
 """Speech outbox coordination stays pure and uses only fixtures."""
 import json
 
-from claude_companion import ttsoutbox
+from agent_companion import ttsoutbox
 
 
 def _clip(root, sequence, **meta):

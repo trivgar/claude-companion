@@ -9,13 +9,13 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import newsession  # noqa: E402
-from claude_companion import server  # noqa: E402
-from claude_companion.server import newsession as routes  # noqa: E402
+from agent_companion import newsession  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import newsession as routes  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 SAME = {"origin": "http://testserver", "host": "testserver"}
 WRITE = {**KEY, **SAME}
 
@@ -34,7 +34,7 @@ def test_config_table_has_only_valid_unique_configured_projects(tmp_path, monkey
     folder.mkdir()
     config_file = tmp_path / "config.toml"
     _write_config(config_file, folder, tmp_path / "gone")
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config_file))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config_file))
 
     configured = newsession.settings()
 
@@ -84,7 +84,7 @@ def client(tmp_path, monkeypatch):
     folder.mkdir()
     config_file = tmp_path / "config.toml"
     _write_config(config_file, folder, tmp_path / "gone")
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config_file))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config_file))
     monkeypatch.setattr(server, "FEATURES", [])
     return TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
 
@@ -94,7 +94,7 @@ def test_routes_refuse_unknown_projects_and_enforce_owner_write_rules(client, mo
     monkeypatch.setattr(routes.newsession, "launch", lambda *args: started.append(args) or newsession.LaunchResult(True, "", "alpha"))
 
     assert client.get("/api/new-session/projects").status_code == 401
-    assert client.get("/api/new-session/projects", headers={"x-claude-companion-token": TOKEN}).status_code == 401
+    assert client.get("/api/new-session/projects", headers={"x-agent-companion-token": TOKEN}).status_code == 401
     assert client.post("/api/new-session", json={"project": "alpha"}, headers=SAME).status_code == 401
     assert client.post("/api/new-session", json={"project": "alpha"}, headers={**KEY, "origin": "http://other.example", "host": "testserver"}).status_code == 403
     refused = client.post("/api/new-session", json={"project": str(Path("/not-configured"))}, headers=WRITE)

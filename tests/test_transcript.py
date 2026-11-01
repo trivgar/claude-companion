@@ -1,7 +1,7 @@
 import datetime
 import json
 
-from claude_companion.transcript import TranscriptReader
+from agent_companion.transcript import TranscriptReader
 
 
 def _rec(**kw):
@@ -215,7 +215,7 @@ def test_missing_file_returns_empty(tmp_path):
 def test_the_last_reply_is_a_text_block_not_a_tool_call(tmp_path):
     """The sessions tab orders by it: when it last wrote to you."""
     import json
-    from claude_companion.transcript import TranscriptReader
+    from agent_companion.transcript import TranscriptReader
     f = tmp_path / "t.jsonl"
     use = {"input_tokens": 1, "output_tokens": 1}
     f.write_text("\n".join(json.dumps(r) for r in [

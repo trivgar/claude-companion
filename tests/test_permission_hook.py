@@ -1,11 +1,11 @@
-"""The hook that waits for the page's answer (claude_companion/hooks/permission_hook.py).
+"""The hook that waits for the page's answer (agent_companion/hooks/permission_hook.py).
 Everything is a fake: no server, no signals, no clock."""
 import io
 import json
 
 import pytest
 
-from claude_companion.hooks import permission_hook as h
+from agent_companion.hooks import permission_hook as h
 
 KINDS = ["question", "permission"]
 
@@ -207,20 +207,20 @@ def test_a_question_nobody_can_answer_goes_straight_to_the_terminal(monkeypatch)
 
 def test_the_hook_reads_the_servers_own_token_file(monkeypatch, tmp_path):
     pytest.importorskip("fastapi")
-    from claude_companion.server import auth
+    from agent_companion.server import auth
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     tok = auth.load_or_create_token()
     assert h._token() == tok
 
 
 def test_the_hook_talks_to_loopback_even_when_url_is_the_phones_address(monkeypatch):
-    from claude_companion.hooks import permission_hook
-    monkeypatch.setenv("CLAUDE_COMPANION_URL", "https://box.example.org")
-    monkeypatch.setenv("CLAUDE_COMPANION_SERVER_PORT", "9123")
+    from agent_companion.hooks import permission_hook
+    monkeypatch.setenv("AGENT_COMPANION_URL", "https://box.example.org")
+    monkeypatch.setenv("AGENT_COMPANION_SERVER_PORT", "9123")
     assert permission_hook._url() == "http://127.0.0.1:9123"
 
 
-@pytest.mark.parametrize("var", ["CLAUDE_COMPANION_JOB", "COMMS_JOB"])
+@pytest.mark.parametrize("var", ["AGENT_COMPANION_JOB", "COMMS_JOB"])
 def test_headless_jobs_are_never_asked(monkeypatch, var):
     monkeypatch.setenv(var, "mail")
     monkeypatch.setattr(h, "_call", lambda *a, **k: pytest.fail("asked"))

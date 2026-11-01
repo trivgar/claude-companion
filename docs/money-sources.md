@@ -1,13 +1,13 @@
 # Money sources
 
 The Money tab shows what a money source reports. None is set up until you pick
-one: set `money_source` in `~/.config/claude-companion/config.toml` (or
-`CLAUDE_COMPANION_MONEY_SOURCE`). `demo` shows a made-up household, labelled
+one: set `money_source` in `~/.config/agent-companion/config.toml` (or
+`AGENT_COMPANION_MONEY_SOURCE`). `demo` shows a made-up household, labelled
 DEMO, so you can see the panel first. Empty means the tab says "No money source
 set up".
 
-Your Claude writes the real source. It is one file, `claude_companion/money/<name>.py`,
-registered next to `demo` in `claude_companion/money/__init__.py`.
+Your Claude writes the real source. It is one file, `agent_companion/money/<name>.py`,
+registered next to `demo` in `agent_companion/money/__init__.py`.
 
 ## Where the figures can come from
 
@@ -23,7 +23,7 @@ registered next to `demo` in `claude_companion/money/__init__.py`.
 ## The interface
 
 A source is a class with a `name` and these methods (see `MoneySource` in
-`claude_companion/money/__init__.py`):
+`agent_companion/money/__init__.py`):
 
 | Method | Returns |
 |---|---|
@@ -38,7 +38,7 @@ A source is a class with a `name` and these methods (see `MoneySource` in
 Register it:
 
 ```python
-from claude_companion import money
+from agent_companion import money
 
 class MyBankSource:
     name = "mybank"

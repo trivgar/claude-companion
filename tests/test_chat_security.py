@@ -3,7 +3,7 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from claude_companion.server import chat
+from agent_companion.server import chat
 
 
 TARGET = {"name": "Ada", "pid": 11, "pane": "%3", "session_id": "s1", "status": "idle", "waiting": False}

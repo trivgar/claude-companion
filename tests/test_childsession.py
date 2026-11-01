@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from claude_companion.reader import is_child_session
+from agent_companion.reader import is_child_session
 
 REAL = {"name": "garden", "name_source": "user", "bridge_session_id": "s_1",
         "tmux": "claude-garden:@3.%3"}
@@ -69,7 +69,7 @@ def test_an_empty_record_does_not_explode():
 
 # --- the process tree, which decides when /proc can answer --------------------
 
-from claude_companion.reader import spawned_by_session  # noqa: E402
+from agent_companion.reader import spawned_by_session  # noqa: E402
 
 # An SDK host's session as the registry records it: an SDK session
 # with a name Claude Code derived, no bridge, no pane.
@@ -111,8 +111,8 @@ def test_the_reader_asks_the_tree(tmp_path):
     """End to end through SessionReader: two live sessions, one a derived
     SDK name whose parent is not a session. Not labelled."""
     import json, os
-    from claude_companion.liveness import proc_start
-    from claude_companion.reader import SessionReader
+    from agent_companion.liveness import proc_start
+    from agent_companion.reader import SessionReader
     me, parent = os.getpid(), os.getppid()
     (tmp_path / "sessions").mkdir()
     (tmp_path / "projects").mkdir()
@@ -125,7 +125,7 @@ def test_the_reader_asks_the_tree(tmp_path):
     # The environment is faked as the tree is. These pids are the test
     # runner's own, and the default reader would read their real
     # /proc/<pid>/environ: run from inside a job (CLAUDE_TTS_SILENT or
-    # CLAUDE_COMPANION_JOB set at exec), both rows would read as jobs.
+    # AGENT_COMPANION_JOB set at exec), both rows would read as jobs.
     no_env = lambda pid, keys: {}
     rows = {r["name"]: r for r in SessionReader(tmp_path, ppid_of=tree.get, environ_of=no_env).snapshot()}
     assert rows["agent-a6"]["child"] is False

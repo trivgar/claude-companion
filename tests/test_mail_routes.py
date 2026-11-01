@@ -5,18 +5,18 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import addons, server  # noqa: E402
-from claude_companion.mail import queue  # noqa: E402
+from agent_companion import addons, server  # noqa: E402
+from agent_companion.mail import queue  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 SAME = {"origin": "http://testserver", "host": "testserver"}
 
 
 @pytest.fixture
 def c(tmp_path, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_MAIL_DIR", str(tmp_path / "queue"))
+    monkeypatch.setenv("AGENT_COMPANION_MAIL_DIR", str(tmp_path / "queue"))
     credentials = tmp_path / "owner.json"
     credentials.write_text(json.dumps({"address": "owner@example.com", "password": "app password"}))
     config_file = tmp_path / "config.toml"
@@ -24,7 +24,7 @@ def c(tmp_path, monkeypatch):
         '[mail_accounts.owner]\nsource = "gmail"\n'
         '[mail_accounts.second]\nsource = "imap"\n'
         f'credentials_file = "{credentials}"\n')
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config_file))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config_file))
     monkeypatch.setattr(server, "FEATURES", ["mail"])
     queue.write_draft({"id": "m1", "account": "owner", "thread": "t1", "from": "Sender <sender@example.com>",
                        "subject": "Question", "why": "asked", "reply": "Yes."})
@@ -54,8 +54,8 @@ def test_a_person_cannot_claim_the_owner_mailbox(c, monkeypatch):
 
 def test_unconfigured_mail_says_so(tmp_path, monkeypatch):
     monkeypatch.setattr(server, "FEATURES", ["mail"])
-    monkeypatch.setenv("CLAUDE_COMPANION_MAIL_DIR", str(tmp_path / "queue"))
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(tmp_path / "missing.toml"))
+    monkeypatch.setenv("AGENT_COMPANION_MAIL_DIR", str(tmp_path / "queue"))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(tmp_path / "missing.toml"))
     c = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     data = c.get("/api/mail", headers=KEY).json()
     assert data == {"drafts": [], "counts": {"pending": 0, "total": 0}, "setup": False,

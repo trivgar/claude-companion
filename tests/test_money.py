@@ -4,8 +4,8 @@ from datetime import date
 
 import pytest
 
-from claude_companion import money
-from claude_companion.money import demo
+from agent_companion import money
+from agent_companion.money import demo
 
 BAD = re.compile(r"move|transfer|pay|send|create|update|delete", re.I)
 TODAY = date(2026, 10, 29)
@@ -56,11 +56,11 @@ def test_demo_upcoming_comes_from_recurring():
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
+from agent_companion import server  # noqa: E402
 from routes_walk import all_routes  # noqa: E402
 
 TOKEN, OWNER = "t" * 32, "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 PATHS = ["accounts", "net_worth", "cash_flow", "categories", "recurring", "upcoming", "freshness"]
 
 
@@ -71,11 +71,11 @@ def c(monkeypatch):
 
 
 def test_routes_need_the_owner_key(c, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_MONEY_SOURCE", "demo")
+    monkeypatch.setenv("AGENT_COMPANION_MONEY_SOURCE", "demo")
     assert c.get("/api/features").json() == [{"id": "money", "title": "Money"}]
     for p in PATHS:
         assert c.get(f"/api/money/{p}").status_code == 401, p
-        assert c.get(f"/api/money/{p}", headers={"x-claude-companion-key": TOKEN}).status_code == 401, p
+        assert c.get(f"/api/money/{p}", headers={"x-agent-companion-key": TOKEN}).status_code == 401, p
         assert c.get(f"/api/money/{p}", headers=KEY).status_code == 200, p
 
 
@@ -93,7 +93,7 @@ def test_unset_source_says_so(c):
 
 
 def test_demo_through_the_routes(c, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_MONEY_SOURCE", "demo")
+    monkeypatch.setenv("AGENT_COMPANION_MONEY_SOURCE", "demo")
     f = c.get("/api/money/freshness", headers=KEY).json()
     assert f["demo"] is True and f["source"] == "demo"
     assert len(c.get("/api/money/accounts", headers=KEY).json()["accounts"]) == 5
@@ -111,7 +111,7 @@ def test_unknown_figures_are_null_never_zero(c, monkeypatch):
             return [{"month": "2026-10", "income": float("nan"), "spending": None}]
 
     money.register("gappy", Gappy)
-    monkeypatch.setenv("CLAUDE_COMPANION_MONEY_SOURCE", "gappy")
+    monkeypatch.setenv("AGENT_COMPANION_MONEY_SOURCE", "gappy")
     a = c.get("/api/money/accounts", headers=KEY)
     assert a.json()["accounts"][0]["balance"] is None and '"balance":null' in a.text.replace(" ", "")
     cf = c.get("/api/money/cash_flow", headers=KEY).json()["cash_flow"][0]
@@ -124,7 +124,7 @@ def test_a_broken_source_degrades_one_route(c, monkeypatch):
             raise RuntimeError("feed down")
 
     money.register("broken", Broken)
-    monkeypatch.setenv("CLAUDE_COMPANION_MONEY_SOURCE", "broken")
+    monkeypatch.setenv("AGENT_COMPANION_MONEY_SOURCE", "broken")
     d = c.get("/api/money/recurring", headers=KEY).json()
     assert d["recurring"] is None and "feed down" in d["error"]
     assert c.get("/api/money/accounts", headers=KEY).json()["accounts"]

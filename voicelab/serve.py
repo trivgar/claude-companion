@@ -5,18 +5,18 @@
     python3 serve.py --list
 
     curl -s -X POST localhost:9880/tts -H 'Content-Type: application/json' \\
-         -H "X-Voice-Token: $(cat ~/.config/claude-companion/voice-token)" \\
+         -H "X-Voice-Token: $(cat ~/.config/agent-companion/voice-token)" \\
          -d '{"voice": "myvoice", "text": "Hello there."}' -o out.wav
 
-Voices live in ~/.local/share/claude-companion/voices/<name>/ (override with
---voices-dir or CLAUDE_COMPANION_VOICES_DIR). Each has a voice.json:
+Voices live in ~/.local/share/agent-companion/voices/<name>/ (override with
+--voices-dir or AGENT_COMPANION_VOICES_DIR). Each has a voice.json:
 
     {"gpt": "weights/gpt/x.ckpt", "sovits": "weights/sovits/x.pth",
      "ref_audio": "ref.wav", "ref_text": "what the reference clip says", "lang": "en"}
 
 Paths are relative to the voice's folder. Binds to loopback by default.
 Every request needs the header X-Voice-Token, the contents of
-~/.config/claude-companion/voice-token (mode 600, made on first run; callers
+~/.config/agent-companion/voice-token (mode 600, made on first run; callers
 read the same file). POSTs must be application/json and the Host header must be
 127.0.0.1:<port> or localhost:<port>, so a web page cannot reach it by DNS
 rebinding or a cross-site form.
@@ -40,11 +40,11 @@ LANGS = {"en": "en", "zh": "zh", "ja": "ja", "ko": "ko", "yue": "yue"}
 
 
 def default_dir() -> Path:
-    return Path(os.environ.get("CLAUDE_COMPANION_VOICES_DIR") or Path.home() / ".local/share/claude-companion/voices")
+    return Path(os.environ.get("AGENT_COMPANION_VOICES_DIR") or Path.home() / ".local/share/agent-companion/voices")
 
 
 def token_path() -> Path:
-    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "claude-companion" / "voice-token"
+    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "agent-companion" / "voice-token"
 
 
 def load_or_create_token(path: Path | None = None) -> str:

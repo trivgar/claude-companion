@@ -2,6 +2,18 @@
 
 What moved, and whether your settings need anything. Newest first.
 
+## 2026-11-01
+- Renamed from claude-companion to **agent-companion**: the repo, the package
+  (`agent_companion`), the env names (`AGENT_COMPANION_*`), the headers
+  (`x-agent-companion-*`), the token file (`agent-companion-token`), the units
+  and the folders (`~/.config/agent-companion`, `~/.local/share/agent-companion`).
+- For one release the old names still work: `import claude_companion.x` gives
+  the same module, `CLAUDE_COMPANION_*` fills any `AGENT_COMPANION_*` left
+  unset, and the old headers are still heard. The folders are not looked up
+  under the old name: move them (`mv ~/.config/claude-companion
+  ~/.config/agent-companion`, the same for `~/.local/share`, and rename the
+  token file inside) or symlink the old name to the new.
+
 ## 2026-10-29
 - Comms now uses the full `/api/tts/*` coordinator API and the voice lab has
   its five `/api/voicelab/*` routes. Set `tts_dir` to a coordinator directory
@@ -17,7 +29,7 @@ What moved, and whether your settings need anything. Newest first.
   either the existing Claude Gmail connector or IMAP, for example
   `[mail_accounts.owner]` with `source = "gmail"`, and
   `[mail_accounts.other]` with `source = "imap"` and
-  `credentials_file = "~/.config/claude-companion/other-gmail.json"`.
+  `credentials_file = "~/.config/agent-companion/other-gmail.json"`.
   The credential JSON contains its mailbox address and app password; keep it
   mode 600 and never put either value in `config.toml`. With no accounts, the
   Mail tab says it is not set up.
@@ -35,7 +47,7 @@ What moved, and whether your settings need anything. Newest first.
   `livecall_operator_name`, `livecall_voice`, and `livecall_log_file`.
   `private_projects` and the `addons.private` plug point keep projects out of
   Gemini; `addons.asleep` holds ringing while you sleep.
-- To ring an Android app, install `claude-companion[fcm]` and set
+- To ring an Android app, install `agent-companion[fcm]` and set
   `fcm_service_account_file` to its Firebase service-account JSON path. The
   app registers its rotating device token at `/api/tts/app`, which requires
   the owner key, JSON, and the dashboard origin; `fcm_device_file` optionally
@@ -64,7 +76,7 @@ What moved, and whether your settings need anything. Newest first.
 - INSTALL.md section 14: an optional Chrome agent, with the rules and the guard it needs to run without prompts.
 - `app_name` names the dashboard, the pairing page and the home-screen app
   (default "Companion").
-- The ring's logic (`claude_companion.ring`): an ask unanswered 30 minutes while
+- The ring's logic (`agent_companion.ring`): an ask unanswered 30 minutes while
   you are awake alerts once. Optional settings `ring_after_min`, `ring_gap_min`,
   `ring_day_max`; sleep and privacy come from `addons`. Not wired to a phone yet.
 - The Android app (`mobile/`): a shell around the same page that adds

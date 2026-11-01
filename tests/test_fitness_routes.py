@@ -5,13 +5,13 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import fitness, server  # noqa: E402
-from claude_companion.fitness.demo import DemoSource  # noqa: E402
-from claude_companion.server import fitness as route  # noqa: E402
+from agent_companion import fitness, server  # noqa: E402
+from agent_companion.fitness.demo import DemoSource  # noqa: E402
+from agent_companion.server import fitness as route  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 
 
 @pytest.fixture
@@ -25,8 +25,8 @@ def c(monkeypatch):
 def test_fitness_is_a_feature_and_needs_the_owner_key(c):
     assert c.get("/api/features").json() == [{"id": "fitness", "title": "Fitness"}]
     assert c.get("/api/fitness").status_code == 401
-    assert c.get("/api/fitness", headers={"x-claude-companion-key": "x" * 64}).status_code == 401
-    assert c.get("/api/fitness", headers={"x-claude-companion-token": TOKEN}).status_code == 401
+    assert c.get("/api/fitness", headers={"x-agent-companion-key": "x" * 64}).status_code == 401
+    assert c.get("/api/fitness", headers={"x-agent-companion-token": TOKEN}).status_code == 401
 
 
 def test_no_source_says_so_and_points_at_the_docs(c):
@@ -35,7 +35,7 @@ def test_no_source_says_so_and_points_at_the_docs(c):
 
 
 def test_demo_source_is_labelled_and_counted(c, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_FITNESS_SOURCE", "demo")
+    monkeypatch.setenv("AGENT_COMPANION_FITNESS_SOURCE", "demo")
     d = c.get("/api/fitness?days=90", headers=KEY).json()
     assert d["ok"] is True and d["demo"] is True and d["source"] == "Demo data"
     assert 0 < d["recorded"]["nights"] < d["recorded"]["of"] == 90
@@ -44,10 +44,10 @@ def test_demo_source_is_labelled_and_counted(c, monkeypatch):
 
 
 def test_units_goal_and_work_days_come_from_config(c, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_FITNESS_SOURCE", "demo")
-    monkeypatch.setenv("CLAUDE_COMPANION_UNITS", "imperial")
-    monkeypatch.setenv("CLAUDE_COMPANION_FITNESS_SLEEP_GOAL_MIN", "480")
-    monkeypatch.setenv("CLAUDE_COMPANION_FITNESS_WORK_DAYS", "mon,tue,wed")
+    monkeypatch.setenv("AGENT_COMPANION_FITNESS_SOURCE", "demo")
+    monkeypatch.setenv("AGENT_COMPANION_UNITS", "imperial")
+    monkeypatch.setenv("AGENT_COMPANION_FITNESS_SLEEP_GOAL_MIN", "480")
+    monkeypatch.setenv("AGENT_COMPANION_FITNESS_WORK_DAYS", "mon,tue,wed")
     d = c.get("/api/fitness", headers=KEY).json()
     assert d["units"] == {"distance": "mi", "weight": "lb"} and d["goal_min"] == 480
     assert d["work_split"]["work"]["nights"] > 0 and d["work_split"]["off"]["nights"] > 0

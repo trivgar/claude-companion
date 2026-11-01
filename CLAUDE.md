@@ -1,4 +1,4 @@
-# claude-companion
+# agent-companion
 
 This is the repo your person's dashboard runs from, and you are the Claude
 working in it. It reads Claude Code's own files (`~/.claude`) into session
@@ -9,11 +9,11 @@ other person's Claude work on it together.
 
 ## What each part is
 
-- `claude_companion/*.py` (library, stdlib only): `registry`, `reader`,
+- `agent_companion/*.py` (library, stdlib only): `registry`, `reader`,
   `transcript`, `usage`, `pricing`, `limits`, `activity`, `tasks`, `gitstate`,
   `changes`, `messages`, `notify`, `webpush`, `config`, `collab`. No
   dependencies, importable without the server.
-- `claude_companion/server/`: the dashboard (FastAPI, `pip install -e '.[app]'`).
+- `agent_companion/server/`: the dashboard (FastAPI, `pip install -e '.[app]'`).
   `features.py` lists the features in nav order; each is a module with a
   `router`, optional `TITLE` and `start(app)`. A missing module is skipped, so a
   branch without a feature still runs. `auth.py` is the write wall. Pages live in
@@ -22,14 +22,14 @@ other person's Claude work on it together.
 - Asks and chat (`server/asks.py` (it holds the routes), `chat.py`,
   `hooks/permission_hook.py`, `server/install_hooks.py`): permission prompts and
   questions answered from the phone, and typing into a session's tmux pane.
-- `claude_companion/mail/`: the mail drafter. Sources (`gmail.py`, optionally
+- `agent_companion/mail/`: the mail drafter. Sources (`gmail.py`, optionally
   `outlook.py`, see `docs/mail-outlook.md`), `draft.py`, `queue.py`,
-  `voice_guide.py`, `validate.py`. Run with `python -m claude_companion.mail`.
+  `voice_guide.py`, `validate.py`. Run with `python -m agent_companion.mail`.
 - `comms/`: spoken replies. Shell scripts plus Piper; `speak.sh` renders a clip,
   `cast.tsv` names the voices (`server:<name>` means the voice lab server).
 - `voicelab/`: prep, training and serving a custom voice on an Nvidia card.
 - `bin/`, `systemd/`: the mail timer's scripts and the user units.
-- `claude_companion/collab.py`, `hooks/collab_hook.py`: notes between two
+- `agent_companion/collab.py`, `hooks/collab_hook.py`: notes between two
   people's Claudes through GitHub issues.
 - `tests/`: pytest. `tests/test_leaks.py` guards the repo (see below).
 
@@ -43,11 +43,11 @@ Do not weaken any of these, and do not add a way around one.
   on any source attribute containing `send`, `reply` or `forward`. Approving
   makes a draft; your person presses send themselves.
 - **Two credentials, never interchangeable.** The hook token
-  (`claude-companion-token`, readable by anything on the account) opens only
+  (`agent-companion-token`, readable by anything on the account) opens only
   the hook's own routes: create, poll and withdraw an ask
   (`auth.require_hook`). Everything else needs an owner key: a random key made
-  by pairing (`python -m claude_companion.server pair`), kept by the browser
-  and sent as the `x-claude-companion-key` header, never in a URL. The server
+  by pairing (`python -m agent_companion.server pair`), kept by the browser
+  and sent as the `x-agent-companion-key` header, never in a URL. The server
   keeps only its SHA-256 hash in `owner-keys.json` (600). `require_token`
   (reads of private data) and `require_write` accept owner keys only; the hook
   token is refused there and an owner key is refused on hook routes.
@@ -73,7 +73,7 @@ Do not weaken any of these, and do not add a way around one.
   `sam`, `example.com`, `example/app` and `<machine>.<tailnet>.ts.net`.
   `tests/test_leaks.py` scans tracked files for tailnet addresses, `*.ts.net`
   names, real-looking emails and the terms in a deny list kept outside the
-  repo (`~/.config/claude-companion/leak-terms`). Keep it green; never put the
+  repo (`~/.config/agent-companion/leak-terms`). Keep it green; never put the
   deny list in the repo.
 - **Character voices are not shipped.** Only the stock Piper voices in
   `cast.tsv`. No model weights, reference clips or voice config naming a real
@@ -85,15 +85,15 @@ Do not weaken any of these, and do not add a way around one.
   its own in `tmp_path` (see `examples/demo_home.py`); `tests/conftest.py`
   points the config at a file that does not exist. Pass `archive_roots=`
   explicitly; never read them from the real config.
-- **Secrets stay in `~/.config/claude-companion/` (mode 600)** and the data
+- **Secrets stay in `~/.config/agent-companion/` (mode 600)** and the data
   dir, never in the repo: the server token, the voice token, VAPID keys, the
   voice guide.
 - **Never deploy, publish, merge or push for your person** without their say.
 
 ## Library rules that still apply
 
-- **Anything about one user is a setting** (`CLAUDE_COMPANION_*` in the
-  environment, or `~/.config/claude-companion/config.toml`; see README) with a
+- **Anything about one user is a setting** (`AGENT_COMPANION_*` in the
+  environment, or `~/.config/agent-companion/config.toml`; see README) with a
   neutral default.
 - **Read only, and cheap.** Transcripts are read by byte offset, never whole;
   git is asked with `GIT_OPTIONAL_LOCKS=0`; `/proc/<pid>/stat` is split only
@@ -112,7 +112,7 @@ Do not weaken any of these, and do not add a way around one.
   Nobody commits on main in the main checkout, and nobody pushes to main.
 - **Run your own targeted tests** before you queue. The merger runs the whole
   suite once per batch; it is not where you find out your own change is broken.
-- **Queue it and move on:** `python -m claude_companion.mergeq add [BRANCH] --summary "what and why"`.
+- **Queue it and move on:** `python -m agent_companion.mergeq add [BRANCH] --summary "what and why"`.
   The queue pins the sha you queued; later commits on the branch wait for a
   fresh `add`. Start the summary with `for-<label>:` to file a note to the other
   side when it lands (needs `collab_label`).

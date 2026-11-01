@@ -1,5 +1,5 @@
 """Android GET exceptions remain owner reads."""
-from claude_companion.server import auth, comms
+from agent_companion.server import auth, comms
 
 
 def test_android_gets_have_the_owner_read_guard():

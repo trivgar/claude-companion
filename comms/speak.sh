@@ -29,7 +29,7 @@ tmp="$CLIPS/.$id.wav.tmp"
 rendered=0
 if [[ "$voice" == server:* ]]; then
   port="${COMMS_VOICE_PORT:-9880}"
-  tokfile="${XDG_CONFIG_HOME:-$HOME/.config}/claude-companion/voice-token"
+  tokfile="${XDG_CONFIG_HOME:-$HOME/.config}/agent-companion/voice-token"
   tok=$(tr -d '\r\n' < "$tokfile" 2>/dev/null)
   body=$(VNAME="${voice#server:}" TXT="$text" python3 -c '
 import json, os

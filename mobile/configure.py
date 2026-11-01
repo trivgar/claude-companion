@@ -1,4 +1,4 @@
-"""Write the local Android app configuration from claude-companion settings."""
+"""Write the local Android app configuration from agent-companion settings."""
 from __future__ import annotations
 
 import argparse
@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from claude_companion import config
+from agent_companion import config
 
 
 def _slug(value: str) -> str:

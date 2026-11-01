@@ -1,9 +1,9 @@
 # Install guide
 
-This guide sets up claude-companion on a Windows 10 or 11 PC through WSL2 and
+This guide sets up agent-companion on a Windows 10 or 11 PC through WSL2 and
 Ubuntu, then optionally makes the dashboard available to a paired phone. Keep
 keys, tokens, Firebase files, and addresses outside this repository. The app
-stores its configuration in `~/.config/claude-companion/` with restrictive
+stores its configuration in `~/.config/agent-companion/` with restrictive
 permissions.
 
 ## What you need
@@ -83,11 +83,11 @@ there because the dashboard reads its local `~/.claude` session files.
 ### 3. Clone and install
 
 ```bash
-git clone https://github.com/trivgar/claude-companion.git
-cd claude-companion
+git clone https://github.com/trivgar/agent-companion.git
+cd agent-companion
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[app,push]'
-.venv/bin/python -c "import fastapi, uvicorn, claude_companion; print('ok')"
+.venv/bin/python -c "import fastapi, uvicorn, agent_companion; print('ok')"
 ```
 
 The repository is public. You do not need `gh auth login` to clone it.
@@ -97,23 +97,23 @@ The repository is public. You do not need `gh auth login` to clone it.
 Settings are optional. To start with a configuration file:
 
 ```bash
-mkdir -p ~/.config/claude-companion
-cp config.example.toml ~/.config/claude-companion/config.toml
-chmod 700 ~/.config/claude-companion
-chmod 600 ~/.config/claude-companion/config.toml
+mkdir -p ~/.config/agent-companion
+cp config.example.toml ~/.config/agent-companion/config.toml
+chmod 700 ~/.config/agent-companion
+chmod 600 ~/.config/agent-companion/config.toml
 ```
 
 Start the server in one terminal:
 
 ```bash
-.venv/bin/python -m claude_companion.server
+.venv/bin/python -m agent_companion.server
 ```
 
 In another terminal, create a one-time pairing link for this computer's
 browser:
 
 ```bash
-.venv/bin/python -m claude_companion.server pair --name browser
+.venv/bin/python -m agent_companion.server pair --name browser
 ```
 
 Open the link within ten minutes. The page stores the owner key in that
@@ -121,27 +121,27 @@ browser's local storage. The server stores only a hash of the key. Visit
 `http://127.0.0.1:8770/` after pairing.
 
 The hook token created at
-`~/.config/claude-companion/claude-companion-token` is not an owner key. It
+`~/.config/agent-companion/agent-companion-token` is not an owner key. It
 can create, poll, and withdraw an ask, but it cannot approve one.
 
 ### 5. Run it as a user service
 
 This is optional, but makes the dashboard survive the terminal that started
-it. The supplied unit assumes the clone is at `~/claude-companion`; edit its
+it. The supplied unit assumes the clone is at `~/agent-companion`; edit its
 two path lines if you cloned elsewhere.
 
 ```bash
 mkdir -p ~/.config/systemd/user
-cp systemd/claude-companion.service ~/.config/systemd/user/
+cp systemd/agent-companion.service ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now claude-companion
-systemctl --user is-active claude-companion
+systemctl --user enable --now agent-companion
+systemctl --user is-active agent-companion
 ```
 
 After updating the checkout, load the new dashboard code with:
 
 ```bash
-systemctl --user restart claude-companion
+systemctl --user restart agent-companion
 ```
 
 ## Phone access with Tailscale
@@ -171,7 +171,7 @@ contact = "mailto:you@example.com"
 ```
 
 Create a phone pairing link with `.venv/bin/python -m
-claude_companion.server pair --name phone`, and open that link on the phone.
+agent_companion.server pair --name phone`, and open that link on the phone.
 Use the web page in the phone browser. You can add it to the home screen and
 enable browser push after opening it over the HTTPS Tailscale address.
 
@@ -184,13 +184,13 @@ SessionStart and UserPromptSubmit hooks for deferred handoffs to
 `~/.claude/settings.json` and makes a timestamped backup first:
 
 ```bash
-.venv/bin/python -m claude_companion.server.install_hooks
+.venv/bin/python -m agent_companion.server.install_hooks
 ```
 
 To remove only those hooks later:
 
 ```bash
-.venv/bin/python -m claude_companion.server.install_hooks --uninstall
+.venv/bin/python -m agent_companion.server.install_hooks --uninstall
 ```
 
 Claude Code now starts in auto mode by default, which settles most permission
@@ -213,13 +213,13 @@ install the optional user timer. The Sessions tab offers to restore missing
 saved sessions after a reboot or crash.
 
 ```bash
-.venv/bin/python -m claude_companion.restore install-timer
+.venv/bin/python -m agent_companion.restore install-timer
 ```
 
 Remove only that timer later with:
 
 ```bash
-.venv/bin/python -m claude_companion.restore uninstall-timer
+.venv/bin/python -m agent_companion.restore uninstall-timer
 ```
 
 ### Comms and Piper
@@ -239,13 +239,13 @@ after installation. Test a clip with:
 
 ```bash
 TTS_SPEAKER=Juno COMMS_LOCAL_PLAY=0 comms/speak.sh "Testing one two."
-ls ~/.local/share/claude-companion/clips
+ls ~/.local/share/agent-companion/clips
 ```
 
 ### Home Assistant fitness data
 
 Home Assistant is optional. Configure its URL, a token file outside the
-repository, and entity IDs in `~/.config/claude-companion/config.toml`. See
+repository, and entity IDs in `~/.config/agent-companion/config.toml`. See
 [docs/fitness-sources.md](docs/fitness-sources.md) for the available settings.
 You do not need Home Assistant to use the rest of the dashboard.
 
@@ -314,23 +314,23 @@ gh auth login
 For the merge queue, copy and enable the supplied user service and timer:
 
 ```bash
-cp systemd/claude-companion-mergeq.{service,timer} ~/.config/systemd/user/
+cp systemd/agent-companion-mergeq.{service,timer} ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now claude-companion-mergeq.timer
+systemctl --user enable --now agent-companion-mergeq.timer
 ```
 
 For collaboration notes, read [COLLAB.md](COLLAB.md), set `collab_label`,
 `collab_from`, and `collab_repo` in the configuration, then run:
 
 ```bash
-.venv/bin/python -m claude_companion.collab install
-.venv/bin/python -m claude_companion.collab check
+.venv/bin/python -m agent_companion.collab install
+.venv/bin/python -m agent_companion.collab check
 ```
 
 ## Troubleshooting
 
 - If the local page does not load, check the foreground server or run
-  `systemctl --user status claude-companion`.
+  `systemctl --user status agent-companion`.
 - If a phone cannot load the page, check `tailscale serve status`, the
   Tailscale URL in `url`, and that the phone is on the same tailnet.
 - If a paired browser shows the pairing page again, make a new pairing link;

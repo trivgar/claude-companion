@@ -2,8 +2,8 @@ import json
 import os
 from pathlib import Path
 
-from claude_companion.liveness import proc_start
-from claude_companion.registry import live_sessions
+from agent_companion.liveness import proc_start
+from agent_companion.registry import live_sessions
 
 
 def _write(d: Path, pid: int, **over):

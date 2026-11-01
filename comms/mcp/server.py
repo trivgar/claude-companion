@@ -12,7 +12,7 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEAK = os.environ.get("COMMS_SPEAK") or os.path.join(os.path.dirname(HERE), "speak.sh")
-STATE = os.environ.get("COMMS_STATE_DIR") or os.path.expanduser("~/.local/share/claude-companion/comms")
+STATE = os.environ.get("COMMS_STATE_DIR") or os.path.expanduser("~/.local/share/agent-companion/comms")
 LOG = os.path.join(STATE, "mcp.log")
 
 SERVER_NAME = "tts"

@@ -6,15 +6,15 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.routing import APIRoute  # noqa: E402
 
-from claude_companion.server import auth, specs  # noqa: E402
+from agent_companion.server import auth, specs  # noqa: E402
 
 
 def _config(tmp_path, monkeypatch, projects, extra=""):
     path = tmp_path / "config.toml"
     rows = "\n".join(f'{name} = "{root}"' for name, root in projects.items())
     path.write_text(f"{extra}[projects]\n{rows}\n")
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(path))
-    monkeypatch.delenv("CLAUDE_COMPANION_SPEC_GLOBS", raising=False)
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(path))
+    monkeypatch.delenv("AGENT_COMPANION_SPEC_GLOBS", raising=False)
 
 
 def _write(root, relative, text, modified):

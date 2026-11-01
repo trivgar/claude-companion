@@ -1,7 +1,7 @@
 """Android comms registration does not require real Firebase credentials."""
 import json
 
-from claude_companion import commsapp
+from agent_companion import commsapp
 
 
 def _clip(root, sequence):
@@ -13,7 +13,7 @@ def _clip(root, sequence):
 def test_registration_is_private_and_a_new_token_starts_clean(tmp_path, monkeypatch):
     tts = tmp_path / "tts"
     tts.mkdir()
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_APP_STATE", str(tmp_path / "state.json"))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_APP_STATE", str(tmp_path / "state.json"))
     first = commsapp.register(tts, "one", now=100, notify=True)
     assert first["registered"] and oct((tmp_path / "state.json").stat().st_mode & 0o777) == "0o600"
     commsapp.took(tts, now=101)
@@ -32,7 +32,7 @@ def test_ready_excludes_finished_and_pushed_clips(tmp_path):
 def test_a_clip_is_claimed_before_its_mobile_push(tmp_path, monkeypatch):
     tts = tmp_path / "tts"
     tts.mkdir()
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_APP_STATE", str(tmp_path / "state.json"))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_APP_STATE", str(tmp_path / "state.json"))
     monkeypatch.setattr(commsapp, "configured", lambda: True)
     _clip(tmp_path, 1)
     commsapp.register(tts, "token", now=100)

@@ -2,19 +2,19 @@
 #
 # mail-draft.sh -- read what arrived, queue replies that want one, send nothing.
 # Run by the user timer in systemd/mail-draft.timer. The work is in
-# `python -m claude_companion.mail draft`; its claude runs are allowed the mail
-# provider's READ tools only (claude_companion/mail/gmail.py), and the writing
+# `python -m agent_companion.mail draft`; its claude runs are allowed the mail
+# provider's READ tools only (agent_companion/mail/gmail.py), and the writing
 # step holds no mail tool at all.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PY="${CLAUDE_COMPANION_PYTHON:-python3}"
-LOGDIR="${XDG_STATE_HOME:-$HOME/.local/state}/claude-companion"
+PY="${AGENT_COMPANION_PYTHON:-${CLAUDE_COMPANION_PYTHON:-python3}}"
+LOGDIR="${XDG_STATE_HOME:-$HOME/.local/state}/agent-companion"
 mkdir -p "$LOGDIR"
 LOG="$LOGDIR/mail.log"
 export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
 log() { printf '%s %s\n' "$(date '+%F %T')" "$*" >> "$LOG"; }
 
-out=$("$PY" -m claude_companion.mail draft 2>&1)
+out=$("$PY" -m agent_companion.mail draft 2>&1)
 rc=$?
 log "draft rc=$rc :: $(printf '%s' "$out" | tr '\n' ' ' | cut -c1-200)"
 

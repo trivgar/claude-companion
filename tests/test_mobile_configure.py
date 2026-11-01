@@ -15,7 +15,7 @@ def _run(tmp_path, text, firebase=True):
     cfg.write_text(text)
     out = tmp_path / "out"
     return subprocess.run([sys.executable, str(ROOT / "mobile" / "configure.py"), "--out", str(out)],
-                          env={"CLAUDE_COMPANION_CONFIG": str(cfg), "PATH": "/usr/bin:/bin"},
+                          env={"AGENT_COMPANION_CONFIG": str(cfg), "PATH": "/usr/bin:/bin"},
                           capture_output=True, text=True), out
 
 

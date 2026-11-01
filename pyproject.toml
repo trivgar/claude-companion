@@ -1,5 +1,5 @@
 [project]
-name = "claude-companion"
+name = "agent-companion"
 version = "0.1.0"
 description = "A dashboard for your Claude Code sessions: what is running, what it costs, and what needs you."
 requires-python = ">=3.11"
@@ -17,11 +17,11 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["claude_companion", "claude_companion.server", "claude_companion.mail", "claude_companion.money", "claude_companion.fitness", "claude_companion.hooks"]
+packages = ["agent_companion", "claude_companion", "agent_companion.server", "agent_companion.mail", "agent_companion.money", "agent_companion.fitness", "agent_companion.hooks"]
 
 [tool.setuptools.package-data]
-"claude_companion.server" = ["static/*"]
-"claude_companion.mail" = ["prompts/*"]
+"agent_companion.server" = ["static/*"]
+"agent_companion.mail" = ["prompts/*"]
 
 [project.scripts]
-claude-companion = "claude_companion.server:main"
+agent-companion = "agent_companion.server:main"

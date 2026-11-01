@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from claude_companion.codex_limits import CodexLimits
+from agent_companion.codex_limits import CodexLimits
 
 
 NOW = 1_800_000_000.0
@@ -88,8 +88,8 @@ def test_unchanged_rollout_is_not_reparsed_but_a_changed_one_is(tmp_path, monkey
 
 def test_sessions_usage_and_strip_include_the_optional_codex_reading():
     root = Path(__file__).resolve().parents[1]
-    route = (root / "claude_companion/server/sessions.py").read_text()
-    strip = (root / "claude_companion/server/static/sessions.js").read_text()
+    route = (root / "agent_companion/server/sessions.py").read_text()
+    strip = (root / "agent_companion/server/static/sessions.js").read_text()
     assert 'out["codex"] = codex_limits.read()' in route
     assert "Codex ${codex.join(' · ')}" in strip
     assert "5h ${Math.round(c.five_hour.utilization)}%" in strip

@@ -1,7 +1,7 @@
 """Voice-lab parsing uses only temporary coordinator fixtures."""
 import json
 
-from claude_companion.server import voicelab
+from agent_companion.server import voicelab
 
 
 def _tts(tmp_path):

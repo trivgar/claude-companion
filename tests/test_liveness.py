@@ -1,6 +1,6 @@
 import os
 
-from claude_companion.liveness import is_alive, proc_start
+from agent_companion.liveness import is_alive, proc_start
 
 
 def test_proc_start_reads_own_process():
@@ -39,7 +39,7 @@ def test_comm_with_spaces_does_not_shift_fields(tmp_path, monkeypatch):
     fake = tmp_path / "stat"
     fields = " ".join(str(i) for i in range(1, 41))
     fake.write_text(f"4242 (npm exec agentv) S {fields}\n")
-    monkeypatch.setattr("claude_companion.liveness.STAT_PATH", lambda pid: str(fake))
+    monkeypatch.setattr("agent_companion.liveness.STAT_PATH", lambda pid: str(fake))
 
     assert proc_start(4242) == "19"
     # What the bug looked like: positional field 22 of the raw line.

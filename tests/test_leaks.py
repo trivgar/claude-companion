@@ -1,8 +1,8 @@
 """Nothing of the original owner's life ships in this repo.
 
 The terms come from a file OUTSIDE the repo (one per line, case-insensitive),
-so the list itself never ships: ~/.config/claude-companion/leak-terms, or
-CLAUDE_COMPANION_LEAK_TERMS. Without it only the generic patterns run: tailnet
+so the list itself never ships: ~/.config/agent-companion/leak-terms, or
+AGENT_COMPANION_LEAK_TERMS. Without it only the generic patterns run: tailnet
 addresses, *.ts.net names and real-looking email addresses.
 """
 import os
@@ -11,8 +11,8 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TERMS_FILE = Path(os.environ.get("CLAUDE_COMPANION_LEAK_TERMS")
-                  or Path.home() / ".config" / "claude-companion" / "leak-terms")
+TERMS_FILE = Path(os.environ.get("AGENT_COMPANION_LEAK_TERMS")
+                  or Path.home() / ".config" / "agent-companion" / "leak-terms")
 PATTERNS = [
     re.compile(r"\b100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}\b"),   # tailnet (CGNAT) addresses
     re.compile(r"\b[a-z0-9-]+\.[a-z0-9-]+\.ts\.net\b", re.I),

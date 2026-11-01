@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 from fastapi import HTTPException
 
-from claude_companion import auditions, safe_paths
-from claude_companion.server import comms, voicelab
+from agent_companion import auditions, safe_paths
+from agent_companion.server import comms, voicelab
 
 
 def test_files_and_directories_refuse_escapes_and_symlinks(tmp_path):
@@ -68,8 +68,8 @@ def test_file_routes_reject_linked_files_without_starting_a_server(tmp_path, mon
     clips = tmp_path / "clips"
     clips.mkdir()
     (clips / "100-Speaker.wav").symlink_to(outside)
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tts))
-    monkeypatch.setenv("CLAUDE_COMPANION_VOICELAB_DIR", str(lab))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tts))
+    monkeypatch.setenv("AGENT_COMPANION_VOICELAB_DIR", str(lab))
     monkeypatch.setenv("COMMS_CLIPS_DIR", str(clips))
 
     for call in (

@@ -1,7 +1,7 @@
 """Map pending asks onto their live owning session."""
 import json
 
-from claude_companion.server import asks, sessions
+from agent_companion.server import asks, sessions
 
 
 def _row(pid, speaker="", **over):

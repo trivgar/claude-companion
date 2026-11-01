@@ -9,10 +9,10 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import livecall, ring, server  # noqa: E402
-from claude_companion.server import auth  # noqa: E402
-from claude_companion.server import asks  # noqa: E402
-from claude_companion.server import livecall as routes  # noqa: E402
+from agent_companion import livecall, ring, server  # noqa: E402
+from agent_companion.server import auth  # noqa: E402
+from agent_companion.server import asks  # noqa: E402
+from agent_companion.server import livecall as routes  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
@@ -46,7 +46,7 @@ def post(client, path, body, headers=PAGE):
 
 def test_live_call_is_hidden_and_routes_are_absent_without_a_key_file(monkeypatch):
     monkeypatch.setattr(server, "FEATURES", [])
-    monkeypatch.setenv("CLAUDE_COMPANION_GEMINI_KEY_FILE", "")
+    monkeypatch.setenv("AGENT_COMPANION_GEMINI_KEY_FILE", "")
     client = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     page = client.get("/")
     assert 'id="call"' not in page.text

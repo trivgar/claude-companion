@@ -10,7 +10,7 @@ import pytest
 pytest.importorskip("fastapi")
 sync_api = pytest.importorskip("playwright.sync_api")
 
-from claude_companion import server  # noqa: E402
+from agent_companion import server  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
@@ -35,7 +35,7 @@ def setup(tmp_path, monkeypatch):
     clips.mkdir()
     monkeypatch.setenv("COMMS_CLIPS_DIR", str(clips))
     monkeypatch.setenv("COMMS_STATE_DIR", str(tmp_path / "state"))
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tmp_path / "no-coordinator"))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tmp_path / "no-coordinator"))
     monkeypatch.setattr(server, "FEATURES", ["comms"])
     app = server.create_app(token=TOKEN, owner_key=OWNER)
     srv = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=0, log_level="warning"))

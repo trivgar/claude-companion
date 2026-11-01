@@ -6,13 +6,13 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import asks  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import asks  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-HOOK = {"x-claude-companion-token": TOKEN}
-KEY = {"x-claude-companion-key": OWNER}
+HOOK = {"x-agent-companion-token": TOKEN}
+KEY = {"x-agent-companion-key": OWNER}
 MINE = {"origin": "http://testserver", "host": "testserver", **KEY}
 
 
@@ -105,10 +105,10 @@ def test_a_question_push_names_the_choices(tmp_path):
 
 @pytest.fixture
 def client(monkeypatch, tmp_path):
-    monkeypatch.setenv("CLAUDE_COMPANION_ASKS", str(tmp_path / "asks"))
+    monkeypatch.setenv("AGENT_COMPANION_ASKS", str(tmp_path / "asks"))
     monkeypatch.setattr(server, "FEATURES", ["asks"])
     pushed = []
-    from claude_companion import notify
+    from agent_companion import notify
     monkeypatch.setattr(notify, "notify", lambda *a, **k: pushed.append(a))
     c = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     c.pushed = pushed
@@ -142,7 +142,7 @@ def test_the_hook_token_decides_nothing_and_an_owner_key_is_no_hook(client):
     same = {"origin": "http://testserver", "host": "testserver"}
     url = f"/api/asks/{ask}/decide"
     assert client.post(url, json={"decision": "allow"}, headers={**same, **HOOK}).status_code == 401
-    assert client.post(url, json={"decision": "allow"}, headers={**same, "x-claude-companion-key": TOKEN}).status_code == 401
+    assert client.post(url, json={"decision": "allow"}, headers={**same, "x-agent-companion-key": TOKEN}).status_code == 401
     assert client.get("/api/asks", headers=HOOK).status_code == 401
     assert client.get(f"/api/asks/{ask}", headers={**KEY}).status_code == 401, "owner key is no hook credential"
     assert client.post("/api/asks", json={"tool": "Bash"}, headers=KEY).status_code == 401
@@ -235,7 +235,7 @@ def test_allow_after_the_full_view_works(client):
 
 
 def test_a_line_that_differs_from_what_runs_needs_the_full_view():
-    from claude_companion.server.asks import _summarise
+    from agent_companion.server.asks import _summarise
     assert _summarise("Bash", {"command": "ls -la"}) == ("ls -la", False)
     assert _summarise("Bash", {"command": "ls\nrm -rf ~"})[1] is True
     assert _summarise("Bash", {"command": "echo hi‮"})[1] is True       # bidi override

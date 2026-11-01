@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from claude_companion.liveness import proc_start  # noqa: E402
+from agent_companion.liveness import proc_start  # noqa: E402
 
 SESSIONS = [
     # project, name, status, model, title, last prompt, last reply, minutes ago, turns, final context
@@ -82,4 +82,4 @@ def build(root: Path) -> Path:
 
 
 if __name__ == "__main__":
-    print(build(Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/claude-companion-demo")))
+    print(build(Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/agent-companion-demo")))

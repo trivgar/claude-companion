@@ -13,8 +13,8 @@ import sys
 
 import pytest
 
-from claude_companion.liveness import proc_environ, proc_start
-from claude_companion.reader import (SPAWN_DEPTH, SessionReader, job_of, root_of,
+from agent_companion.liveness import proc_environ, proc_start
+from agent_companion.reader import (SPAWN_DEPTH, SessionReader, job_of, root_of,
                                      spawned_by_session, spawning_session)
 
 
@@ -58,7 +58,7 @@ def test_spawned_by_session_is_the_same_answer_as_a_bool(tree, want):
 # --- job_of: the environment's say ---------------------------------------------
 
 def test_a_named_job_and_whose_work_it_is_about():
-    assert job_of({"CLAUDE_COMPANION_JOB": "summary", "CLAUDE_COMPANION_ABOUT": "Ada"}) \
+    assert job_of({"AGENT_COMPANION_JOB": "summary", "AGENT_COMPANION_ABOUT": "Ada"}) \
         == ("summary", "Ada")
 
 
@@ -67,20 +67,20 @@ def test_a_silenced_headless_run_is_a_job_too():
 
 
 def test_the_job_name_wins_over_the_silence():
-    assert job_of({"CLAUDE_TTS_SILENT": "1", "CLAUDE_COMPANION_JOB": "digest"}) == ("digest", "")
+    assert job_of({"CLAUDE_TTS_SILENT": "1", "AGENT_COMPANION_JOB": "digest"}) == ("digest", "")
 
 
 def test_no_marker_is_no_job():
     assert job_of({}) == ("", "")
-    assert job_of({"CLAUDE_TTS_SILENT": "", "CLAUDE_COMPANION_JOB": "  "}) == ("", "")
+    assert job_of({"CLAUDE_TTS_SILENT": "", "AGENT_COMPANION_JOB": "  "}) == ("", "")
 
 
 def test_about_alone_does_not_make_a_job():
-    assert job_of({"CLAUDE_COMPANION_ABOUT": "Ada"}) == ("", "")
+    assert job_of({"AGENT_COMPANION_ABOUT": "Ada"}) == ("", "")
 
 
 def test_a_marker_is_cut_to_a_chip():
-    job, about = job_of({"CLAUDE_COMPANION_JOB": "a\nb   " + "x" * 200, "CLAUDE_COMPANION_ABOUT": "\tz "})
+    job, about = job_of({"AGENT_COMPANION_JOB": "a\nb   " + "x" * 200, "AGENT_COMPANION_ABOUT": "\tz "})
     assert job.startswith("a b x") and len(job) == 64
     assert about == "z"
 
@@ -108,7 +108,7 @@ def test_root_is_none_under_a_parentless_child_or_a_loop():
 
 def test_proc_environ_reads_only_the_named_keys_of_a_real_process():
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"),
-           "CLAUDE_COMPANION_JOB": "digest", "SOME_SECRET_TOKEN": "hunter2"}
+           "AGENT_COMPANION_JOB": "digest", "SOME_SECRET_TOKEN": "hunter2"}
     # Popen returns as exec starts, before the kernel has set out the new
     # environment, and a read in that window is empty. So wait for the child
     # to say it is running.
@@ -116,8 +116,8 @@ def test_proc_environ_reads_only_the_named_keys_of_a_real_process():
                          env=env, stdout=subprocess.PIPE)
     try:
         assert p.stdout.readline().strip() == b"up"
-        got = proc_environ(p.pid, ["CLAUDE_COMPANION_JOB", "CLAUDE_COMPANION_ABOUT"])
-        assert got == {"CLAUDE_COMPANION_JOB": "digest"}
+        got = proc_environ(p.pid, ["AGENT_COMPANION_JOB", "AGENT_COMPANION_ABOUT"])
+        assert got == {"AGENT_COMPANION_JOB": "digest"}
         assert proc_environ(p.pid, []) == {}
     finally:
         p.kill()
@@ -128,7 +128,7 @@ def test_proc_environ_reads_only_the_named_keys_of_a_real_process():
 def test_proc_environ_of_a_fake_file(tmp_path, monkeypatch):
     fake = tmp_path / "environ"
     fake.write_bytes(b"SECRET=s3cr3t\0A=1=2\0B\0A=second\0C=\xff\xfe\0NOVALUE=\0")
-    monkeypatch.setattr("claude_companion.liveness.ENVIRON_PATH", lambda pid: str(fake))
+    monkeypatch.setattr("agent_companion.liveness.ENVIRON_PATH", lambda pid: str(fake))
     got = proc_environ(42, ["A", "B", "C", "NOVALUE", "MISSING"])
     assert got == {"A": "1=2", "C": "��", "NOVALUE": ""}
     assert "SECRET" not in got and "s3cr3t" not in json.dumps(got)
@@ -190,7 +190,7 @@ def test_a_detached_job_is_a_child_with_no_parent(tmp_path, procs):
     _register(tmp_path, agent, "scratch", tmux="w:@1.%1")
     _register(tmp_path, job, "proj-ae", src="derived", entrypoint="sdk-cli",
               prompt="You are reading a briefing: summarise", tmux="w:@1.%1")
-    env = FakeEnviron({job: {"CLAUDE_COMPANION_JOB": "station", "CLAUDE_COMPANION_ABOUT": "Wheatley"}})
+    env = FakeEnviron({job: {"AGENT_COMPANION_JOB": "station", "AGENT_COMPANION_ABOUT": "Wheatley"}})
     tree = {agent: 1, job: 900, 900: 1}
     rows = {r["pid"]: r for r in SessionReader(tmp_path, ppid_of=tree.get, environ_of=env).snapshot()}
     j = rows[job]
@@ -243,7 +243,7 @@ def test_a_helper_of_a_job_has_the_job_as_parent_and_no_root(tmp_path, procs):
     _register(tmp_path, job, "proj-ae", src="derived", entrypoint="sdk-cli")
     _register(tmp_path, helper, "proj-c2", src="derived")
     tree = {job: 1, helper: job}
-    env = FakeEnviron({job: {"CLAUDE_COMPANION_JOB": "digest"}})
+    env = FakeEnviron({job: {"AGENT_COMPANION_JOB": "digest"}})
     rows = {r["pid"]: r for r in SessionReader(tmp_path, ppid_of=tree.get, environ_of=env).snapshot()}
     assert (rows[helper]["parent_pid"], rows[helper]["root_pid"], rows[helper]["job"]) == (job, None, "")
 
@@ -283,7 +283,7 @@ def test_only_the_job_keys_are_kept_whatever_environ_returns(tmp_path, procs):
     _register(tmp_path, pid, "proj-ae", src="derived")
     reader = SessionReader(tmp_path, ppid_of={pid: 1}.get,
                            environ_of=lambda p, keys: {"GITHUB_TOKEN": "ghp_secret",
-                                                       "CLAUDE_COMPANION_JOB": "digest"})
+                                                       "AGENT_COMPANION_JOB": "digest"})
     (row,) = reader.snapshot()
     assert row["job"] == "digest"
     assert "ghp_secret" not in json.dumps(row)

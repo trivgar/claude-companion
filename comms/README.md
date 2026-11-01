@@ -11,14 +11,14 @@ is open.
     comms/install.sh
 
 It downloads Piper and the four voices in `cast.tsv` (official rhasspy
-releases) into `~/.local/share/claude-companion/piper`, registers the MCP
+releases) into `~/.local/share/agent-companion/piper`, registers the MCP
 server (`claude mcp add tts --scope user`), and adds the Stop and persona hooks
 to `~/.claude/settings.json` after a timestamped backup. Open a new session
 afterwards.
 
 ## Parts
 
-- `speak.sh "text"`: renders a clip into `~/.local/share/claude-companion/clips/`
+- `speak.sh "text"`: renders a clip into `~/.local/share/agent-companion/clips/`
   (`<id>.wav` plus a `<id>.json` sidecar with speaker, text and time). One pending
   clip per speaker: a newer one replaces an older one nobody has played.
   `COMMS_LOCAL_PLAY=1` also plays it on this machine with paplay or aplay
@@ -33,7 +33,7 @@ afterwards.
 - `mcp/server.py`: a stdlib-only MCP server with one tool, `text_to_speech`,
   for something the owner must hear mid-turn. Ending a turn with the glyph line
   costs nothing extra; a tool call does.
-- Server side: `claude_companion/server/comms.py` (`GET /api/comms/next`,
+- Server side: `agent_companion/server/comms.py` (`GET /api/comms/next`,
   `GET /api/comms/clip/{id}`, `POST /api/comms/played`) and
   `static/comms.js`.
 
@@ -49,7 +49,7 @@ A `cast.tsv` row whose second column is `server:<name>` is rendered by the
 voice lab server instead (`voicelab/serve.py`, default port 9880, override
 with `COMMS_VOICE_PORT`): `speak.sh` POSTs `{voice, text}` to
 `http://127.0.0.1:<port>/tts` with the token from
-`~/.config/claude-companion/voice-token`. If the server is down or refuses, it
+`~/.config/agent-companion/voice-token`. If the server is down or refuses, it
 falls back to the first Piper voice in the file, so keep at least one Piper row.
 
 Only the Piper voices in `cast.tsv` ship. Add a row (name, tab, Piper voice id

@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from claude_companion.usage import HOUR, WINDOW_5H, WINDOW_7D, UsageIndex, tokens_from
+from agent_companion.usage import HOUR, WINDOW_5H, WINDOW_7D, UsageIndex, tokens_from
 
 
 def _rec(ts_iso, out=0, model="claude-opus-5", **usage_extra):

@@ -96,11 +96,11 @@ def test_train_needs_gpt_sovits_dir(tmp_path):
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
+from agent_companion import server  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 
 
 @pytest.fixture
@@ -131,8 +131,8 @@ def client(tmp_path, monkeypatch):
     outbox.mkdir()
     (outbox / "1.json").write_text('{"seq": 1, "name": "Speaker", "at": 1}')
     (outbox / "1.opus").write_bytes(b"OggS")
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tts))
-    monkeypatch.setenv("CLAUDE_COMPANION_VOICELAB_DIR", str(lab))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tts))
+    monkeypatch.setenv("AGENT_COMPANION_VOICELAB_DIR", str(lab))
     monkeypatch.setenv("COMMS_CLIPS_DIR", str(clips))
     monkeypatch.setattr(server, "FEATURES", ["comms", "voicelab"])
     (tmp_path / "secret.txt").write_text("nope")

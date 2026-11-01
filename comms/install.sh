@@ -4,14 +4,14 @@
 #   install.sh [--dry-run] [--skip-download] [--skip-mcp] [--skip-hooks] [--uninstall]
 #
 # 1. Downloads Piper and the cast's voices (comms/cast.tsv) from the official
-#    rhasspy releases into ~/.local/share/claude-companion/piper.
+#    rhasspy releases into ~/.local/share/agent-companion/piper.
 # 2. Registers the MCP server:  claude mcp add tts --scope user -- python3 <here>/mcp/server.py
 # 3. Adds the Stop hook (and the persona hook) to ~/.claude/settings.json,
 #    after a timestamped backup.
 # Every step is safe to repeat. It prints what it did, or with --dry-run what it would do.
 set -u
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-DATA=${COMMS_DATA_DIR:-$HOME/.local/share/claude-companion}
+DATA=${COMMS_DATA_DIR:-$HOME/.local/share/agent-companion}
 SETTINGS=${CLAUDE_SETTINGS:-$HOME/.claude/settings.json}
 PIPER_VERSION=2023.11.14-2
 PIPER_ASSET=piper_linux_x86_64.tar.gz

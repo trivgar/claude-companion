@@ -5,12 +5,12 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import clearline, server  # noqa: E402
-from claude_companion.server import sessions  # noqa: E402
+from agent_companion import clearline, server  # noqa: E402
+from agent_companion.server import sessions  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 WRITE = {**KEY, "origin": "http://testserver", "host": "testserver"}
 
 
@@ -18,18 +18,18 @@ WRITE = {**KEY, "origin": "http://testserver", "host": "testserver"}
 def isolated_config(tmp_path, monkeypatch):
     path = tmp_path / "config.toml"
     path.write_text("")
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(path))
-    monkeypatch.setenv("CLAUDE_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
-    monkeypatch.delenv("CLAUDE_COMPANION_CLEAR_LINE", raising=False)
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(path))
+    monkeypatch.setenv("AGENT_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
+    monkeypatch.delenv("AGENT_COMPANION_CLEAR_LINE", raising=False)
 
 
 def test_get_and_put_use_the_config_default_and_enforce_the_range(tmp_path, monkeypatch):
     path = tmp_path / "line.json"
     config = tmp_path / "config.toml"
     config.write_text("")
-    monkeypatch.setenv("CLAUDE_COMPANION_CLEARLINE", str(path))
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config))
-    monkeypatch.delenv("CLAUDE_COMPANION_CLEAR_LINE", raising=False)
+    monkeypatch.setenv("AGENT_COMPANION_CLEARLINE", str(path))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config))
+    monkeypatch.delenv("AGENT_COMPANION_CLEAR_LINE", raising=False)
     assert clearline.get() == clearline.DEFAULT
     config.write_text("clear_line = 600000\n")
     assert clearline.get() == 600_000
@@ -53,7 +53,7 @@ def test_over_skips_children_and_rows_without_context():
 
 
 def test_watcher_pushes_once_per_crossing_and_writes_state(tmp_path, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_CLEARLINE", str(tmp_path / "line.json"))
+    monkeypatch.setenv("AGENT_COMPANION_CLEARLINE", str(tmp_path / "line.json"))
     rows = [{"session_id": "abcdef1234", "speaker": "Session", "project": "sample",
              "context_used": 447_000}]
     sent = []
@@ -73,7 +73,7 @@ def test_watcher_pushes_once_per_crossing_and_writes_state(tmp_path, monkeypatch
 
 
 def test_watcher_retries_a_failed_push(tmp_path, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_CLEARLINE", str(tmp_path / "line.json"))
+    monkeypatch.setenv("AGENT_COMPANION_CLEARLINE", str(tmp_path / "line.json"))
     sent = [False]
     watcher = clearline.Watcher(lambda: [{"session_id": "s1", "context_used": 500_000}],
                                 lambda *args: sent[0], path=tmp_path / "over.json")
@@ -91,9 +91,9 @@ def test_watcher_refuses_to_start_under_pytest():
 def test_routes_protect_the_line_and_add_session_flags(tmp_path, monkeypatch):
     config = tmp_path / "config.toml"
     config.write_text("")
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config))
-    monkeypatch.setenv("CLAUDE_COMPANION_DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setenv("CLAUDE_COMPANION_CLEARLINE", str(tmp_path / "line.json"))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config))
+    monkeypatch.setenv("AGENT_COMPANION_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("AGENT_COMPANION_CLEARLINE", str(tmp_path / "line.json"))
     monkeypatch.setattr(server, "FEATURES", ["sessions"])
     parts = {"reader": type("Reader", (), {"snapshot": lambda self: [
         {"pid": 1, "session_id": "over", "project": "sample", "cwd": "", "context_used": 400_000,

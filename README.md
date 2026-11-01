@@ -1,4 +1,4 @@
-<h1 align="center">claude-companion</h1>
+<h1 align="center">agent-companion</h1>
 
 <p align="center">
   <b>A phone-first dashboard for your Claude Code sessions, and a few helpers that run on your own PC.</b><br>
@@ -14,7 +14,7 @@
 
 Run four or five Claude Code sessions at once and the questions pile up. Which
 one is stuck on a permission prompt? Which one is nearly out of context? What
-did today cost? claude-companion answers them on one page you can open on your
+did today cost? agent-companion answers them on one page you can open on your
 phone. Around that page sit a few helpers that run on your own computer: a
 mail drafter, spoken replies, a place to make voices, and notes between two
 people's Claudes.
@@ -155,7 +155,7 @@ flowchart LR
 ## Local writes
 
 Your Claude Code sessions and transcripts remain in `~/.claude`. By default,
-claude-companion reads them. It writes the following there only when the
+agent-companion reads them. It writes the following there only when the
 corresponding feature is used:
 
 - The Sessions tab writes `~/.claude/usage-cache.json` and
@@ -178,7 +178,7 @@ corresponding feature is used:
 - When `health_push = true`, the Machine watcher writes `health-alerts.json`
   in the app data directory. It contains only warning crossing and delivery
   times, so each reading can be pushed at most once in six hours.
-- `python -m claude_companion.server.install_hooks` adds its hooks to
+- `python -m agent_companion.server.install_hooks` adds its hooks to
   `~/.claude/settings.json` and first writes a timestamped
   `~/.claude/settings.json.bak-...` backup: the asks hooks, SessionStart and
   UserPromptSubmit hooks for deferred handoffs, and a PostToolUse(Bash) hook
@@ -191,19 +191,19 @@ corresponding feature is used:
   registers the `tts` MCP server with `claude mcp add tts --scope user`; Claude
   Code keeps that user-scope registration in its own user configuration,
   normally `~/.claude.json` beside the `~/.claude` directory.
-- `python -m claude_companion.collab install` is another optional hook setup.
+- `python -m agent_companion.collab install` is another optional hook setup.
   It adds its SessionStart hook to `~/.claude/settings.json` with a timestamped
   backup.
-- `python3 -m claude_companion.restore snapshot` writes
+- `python3 -m agent_companion.restore snapshot` writes
   `restore-snapshot.json` in the app data directory. Its optional timer
-  installer writes `claude-companion-restore-snapshot.service` and
-  `claude-companion-restore-snapshot.timer` in the user systemd directory;
+  installer writes `agent-companion-restore-snapshot.service` and
+  `agent-companion-restore-snapshot.timer` in the user systemd directory;
   snapshots are private local state and a recent multi-session snapshot is
   retained for up to four hours after every saved session disappears at once.
 
 The app's own asks, mail queue, clips, voices, paired-device hashes, and other
-state live in `~/.local/share/claude-companion/` and
-`~/.config/claude-companion/`. The phone keeps its owner key in browser local
+state live in `~/.local/share/agent-companion/` and
+`~/.config/agent-companion/`. The phone keeps its owner key in browser local
 storage.
 
 ## Outbound connections
@@ -242,7 +242,7 @@ The full list, with the reasons, is in [CLAUDE.md](CLAUDE.md).
 3. Add Tailscale, hooks, mail, comms, or other optional pieces one at a time.
 
 Just want to look? `python3 -m pip install -e '.[app,push]'`, then
-`python3 -m claude_companion.server` and open `http://127.0.0.1:8770/`, or run
+`python3 -m agent_companion.server` and open `http://127.0.0.1:8770/`, or run
 `python3 examples/demo_home.py /tmp/demo` to build a made-up `~/.claude` first.
 
 ## Status
@@ -268,8 +268,8 @@ first.
 <img src="docs/images/terminal.png" alt="examples/sessions.py: four live sessions with model, context, cost and last reply" width="720">
 
 ```bash
-git clone https://github.com/trivgar/claude-companion
-cd claude-companion
+git clone https://github.com/trivgar/agent-companion
+cd agent-companion
 python3 -m pip install -e .
 
 python3 examples/sessions.py                     # your own sessions
@@ -301,8 +301,8 @@ a few kilobytes per poll.
 
 ```python
 from pathlib import Path
-from claude_companion.reader import SessionReader
-from claude_companion.usage import UsageIndex
+from agent_companion.reader import SessionReader
+from agent_companion.usage import UsageIndex
 
 home = Path.home() / ".claude"
 
@@ -344,7 +344,7 @@ there looking idle. Add it to `~/.claude/settings.json`:
 {
   "hooks": {
     "PermissionRequest": [
-      {"matcher": ".*", "hooks": [{"type": "command", "command": "python3 -m claude_companion.notify", "timeout": 2}]}
+      {"matcher": ".*", "hooks": [{"type": "command", "command": "python3 -m agent_companion.notify", "timeout": 2}]}
     ]
   }
 }
@@ -358,7 +358,7 @@ and a device subscribed.
 
 ### Library settings
 
-In `~/.config/claude-companion/config.toml`, or as `CLAUDE_COMPANION_<KEY>`
+In `~/.config/agent-companion/config.toml`, or as `AGENT_COMPANION_<KEY>`
 in the environment, which wins. A file as well as the environment, because
 hooks run outside any server's process.
 
@@ -379,7 +379,7 @@ hooks run outside any server's process.
 | `health_disk_full_pct` | Disk-use warning percentage; default 90 |
 | `health_mem_full_pct` | Memory-use warning percentage; default 92 |
 | `health_push` | Send optional local Machine warning pushes; default false |
-| `data_dir` | Directory for app state, including restore snapshots; default `~/.local/share/claude-companion` |
+| `data_dir` | Directory for app state, including restore snapshots; default `~/.local/share/agent-companion` |
 | `score_window_days` | Days after a recorded commit in which replacing one of its added lines counts as rework; default 7 |
 | `restore_snapshot_interval_min` | Snapshot timer cadence in minutes, 1 through 60; default 5 |
 | `systemd_user_dir` | Where the restore timer installer writes user units; default `~/.config/systemd/user` |
@@ -398,8 +398,8 @@ own environment instead:
 
 | Variable | Row field |
 |---|---|
-| `CLAUDE_COMPANION_JOB=<word>` | `job`, and `child` is true |
-| `CLAUDE_COMPANION_ABOUT=<name>` | `job_about`: whose work the job is about |
+| `AGENT_COMPANION_JOB=<word>` | `job`, and `child` is true |
+| `AGENT_COMPANION_ABOUT=<name>` | `job_about`: whose work the job is about |
 | `CLAUDE_TTS_SILENT=1` alone | `job` reads `headless` |
 
 Only those names are read from `/proc/<pid>/environ`, once per process, and
@@ -425,21 +425,21 @@ integrations without changing unrelated hooks:
 
 ```bash
 # Asks and commit hooks installed by install_hooks.py
-.venv/bin/python -m claude_companion.server.install_hooks --uninstall
+.venv/bin/python -m agent_companion.server.install_hooks --uninstall
 
 # Comms hooks and its user-scope tts MCP registration
 comms/install.sh --uninstall
 
 # Collaboration notes SessionStart hook, if installed
-.venv/bin/python -m claude_companion.collab uninstall
+.venv/bin/python -m agent_companion.collab uninstall
 
 # Restore snapshot user timer
-.venv/bin/python -m claude_companion.restore uninstall-timer
+.venv/bin/python -m agent_companion.restore uninstall-timer
 ```
 
 Each command leaves existing timestamped `settings.json` backups in place for
 review. If you manually added the standalone `notify` hook, remove only its
-`python3 -m claude_companion.notify` entry from the `PermissionRequest` hooks
+`python3 -m agent_companion.notify` entry from the `PermissionRequest` hooks
 in `~/.claude/settings.json`.
 
 ### Tests

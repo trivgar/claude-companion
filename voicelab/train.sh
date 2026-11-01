@@ -4,7 +4,7 @@
 #   GPT_SOVITS_DIR=~/GPT-SoVITS ./train.sh [--dry-run] <voice> <dataset-dir>
 #
 # <dataset-dir> holds <voice>.list and wavs/ (prep.py's output). Results go to
-#   ${VOICES_DIR:-~/.local/share/claude-companion/voices}/<voice>/
+#   ${VOICES_DIR:-~/.local/share/agent-companion/voices}/<voice>/
 # Tunables (env): S1_EPOCHS (15), S2_EPOCHS (8), BATCH (auto from VRAM: 4/8/12),
 # GPU (0). Run it inside the conda env you installed
 # GPT-SoVITS into. Stage file names follow upstream v2 (see README); if a
@@ -23,7 +23,7 @@ fi
 case "$VOICE" in *[!A-Za-z0-9_-]*) echo "voice name: letters, digits, _ and - only" >&2; exit 2;; esac
 
 G="$GPT_SOVITS_DIR"
-OUT="${VOICES_DIR:-$HOME/.local/share/claude-companion/voices}/$VOICE"
+OUT="${VOICES_DIR:-$HOME/.local/share/agent-companion/voices}/$VOICE"
 EXP="$OUT/exp"
 LIST="$DATA/$VOICE.list"
 WAVS="$DATA/wavs"

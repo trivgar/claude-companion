@@ -6,7 +6,7 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from claude_companion.server import chat
+from agent_companion.server import chat
 
 
 KNOWN = {"ada": {"name": "Ada", "pid": 11, "pane": "%3", "cwd": "/w/proj", "session_id": "s1",
@@ -228,14 +228,14 @@ def test_guarded_card_actions_reject_a_stale_pid_without_sending(monkeypatch, ac
 def test_cave_addresses_keep_the_same_owner_and_write_guards(monkeypatch, tmp_path):
     """Route coverage is kept even though this sandbox does not run clients."""
     from fastapi.testclient import TestClient
-    from claude_companion import server
-    from claude_companion.server import auth
+    from agent_companion import server
+    from agent_companion.server import auth
 
     owner = "o" * 64
-    monkeypatch.setenv("CLAUDE_COMPANION_CHAT_LOG", str(tmp_path / "chat.jsonl"))
-    monkeypatch.setenv("CLAUDE_COMPANION_CLAUDE_HOME", str(tmp_path / "claude"))
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(tmp_path / "config.toml"))
-    monkeypatch.setenv("CLAUDE_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
+    monkeypatch.setenv("AGENT_COMPANION_CHAT_LOG", str(tmp_path / "chat.jsonl"))
+    monkeypatch.setenv("AGENT_COMPANION_CLAUDE_HOME", str(tmp_path / "claude"))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(tmp_path / "config.toml"))
+    monkeypatch.setenv("AGENT_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
     monkeypatch.setattr(server, "FEATURES", ["chat"])
     monkeypatch.setattr(chat, "known", lambda: KNOWN)
     monkeypatch.setattr(chat, "send", lambda target, text: (True, ""))
@@ -249,14 +249,14 @@ def test_cave_addresses_keep_the_same_owner_and_write_guards(monkeypatch, tmp_pa
 
 
 def test_a_target_without_its_cwd_degrades_to_empty(tmp_path):
-    from claude_companion.server import chat as c
+    from agent_companion.server import chat as c
     path = c.transcript_path({"pid": 1, "name": "Ada"}, tmp_path)
     assert not path.exists()
     assert c.replies(path, 0) == [] and c.effort(path) is None and c.conversation(path) == []
 
 
 def test_model_and_effort_picker_commands_use_the_four_second_two_tap_pattern():
-    source = (Path(__file__).resolve().parent.parent / "claude_companion/server/static/cave.js").read_text()
+    source = (Path(__file__).resolve().parent.parent / "agent_companion/server/static/cave.js").read_text()
     assert "const PICKER_ARM_MS = 4000" in source
     assert "Tap again to switch to ${match[1]}" in source
     assert "if (!pickerTap(command)) return;" in source

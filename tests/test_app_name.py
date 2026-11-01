@@ -3,15 +3,15 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
+from agent_companion import server  # noqa: E402
 
 
 def _client(monkeypatch, name=None):
     if name is None:
-        monkeypatch.delenv("CLAUDE_COMPANION_APP_NAME", raising=False)
+        monkeypatch.delenv("AGENT_COMPANION_APP_NAME", raising=False)
     else:
-        monkeypatch.setenv("CLAUDE_COMPANION_APP_NAME", name)
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", "/nonexistent")
+        monkeypatch.setenv("AGENT_COMPANION_APP_NAME", name)
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", "/nonexistent")
     return TestClient(server.create_app(token="t" * 32))
 
 

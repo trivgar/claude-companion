@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from claude_companion import mergeq
+from agent_companion import mergeq
 
 SUITE = "if [ -e BAD ]; then echo '1 failed'; exit 1; fi; echo '5 passed in 0.01s'"
 ENV = {"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com",
@@ -103,7 +103,7 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setenv("PATH", f"{bindir}{os.pathsep}{os.environ['PATH']}")
     monkeypatch.setenv("FAKE_LOG", str(log))
     monkeypatch.setenv("FAKE_ORIGIN", str(origin))
-    monkeypatch.setenv("CLAUDE_COMPANION_MERGEQ_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("AGENT_COMPANION_MERGEQ_DIR", str(tmp_path / "state"))
     monkeypatch.delenv("FAKE_GH_UNAUTHED", raising=False)
     monkeypatch.delenv("FAKE_EXISTING_PRS", raising=False)
 
@@ -172,7 +172,7 @@ def test_green_batch_opens_and_merges_prs(world):
     assert [o["state"] for o in world.store.last()["outcomes"]] == ["merged", "merged"]
     # the clean main checkout followed, and the server was restarted
     assert (world.main / "a.txt").exists()
-    assert "restart claude-companion" in (world.tmp / "systemctl.log").read_text()
+    assert "restart agent-companion" in (world.tmp / "systemctl.log").read_text()
     assert [o["branch"] for o in world.store.history()] == ["feat/a", "feat/b"]
 
 

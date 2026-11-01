@@ -10,12 +10,12 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import auth  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import auth  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 SAME = {"origin": "http://testserver", "host": "testserver"}
 W = {**KEY, **SAME}
 COMMS = Path(__file__).resolve().parent.parent / "comms"
@@ -40,16 +40,16 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("COMMS_DATA_DIR", raising=False)
     monkeypatch.delenv("PIPER_BIN", raising=False)
-    from claude_companion.server import settings as settings_mod
+    from agent_companion.server import settings as settings_mod
     monkeypatch.setattr(settings_mod, "_which", lambda name: None)
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tts))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tts))
     monkeypatch.setenv("COMMS_STATE_DIR", str(tmp_path / "state"))
     monkeypatch.setenv("COMMS_CLIPS_DIR", str(tmp_path / "clips"))
     monkeypatch.setenv("FAKE_LOG", str(tmp_path / "log"))
     cfgfile = tmp_path / "config.toml"
     cfgfile.write_text('name = "x"\n')
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(cfgfile))
-    monkeypatch.setenv("CLAUDE_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(cfgfile))
+    monkeypatch.setenv("AGENT_COMPANION_OWNER_KEYS", str(tmp_path / "owner-keys.json"))
     monkeypatch.setattr(server, "FEATURES", ["settings", "comms"])
     c = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     c.tmp, c.cfg = tmp_path, cfgfile
@@ -58,7 +58,7 @@ def client(tmp_path, monkeypatch):
 
 
 def install_piper(client):
-    piper = client.tmp / "home" / ".local" / "share" / "claude-companion" / "piper" / "piper" / "piper"
+    piper = client.tmp / "home" / ".local" / "share" / "agent-companion" / "piper" / "piper" / "piper"
     piper.parent.mkdir(parents=True)
     piper.write_text("#!/bin/sh\n")
     piper.chmod(0o755)
@@ -66,7 +66,7 @@ def install_piper(client):
 
 def test_reads_need_the_owner_key(client):
     assert client.get("/api/settings").status_code == 401
-    assert client.get("/api/settings", headers={"x-claude-companion-token": TOKEN}).status_code == 401
+    assert client.get("/api/settings", headers={"x-agent-companion-token": TOKEN}).status_code == 401
     assert client.get("/api/settings", headers=KEY).status_code == 200
 
 
@@ -155,7 +155,7 @@ def test_volume_persists_and_is_read_back(client):
 def test_unpair_by_name_and_self_needs_confirm(client):
     auth.add_device("laptop", "l" * 64)
     auth.add_device("phone", "p" * 64)
-    me = {"x-claude-companion-key": "p" * 64}
+    me = {"x-agent-companion-key": "p" * 64}
     assert client.post("/api/settings/devices/unpair", json={"name": "laptop"}, headers={**me, **SAME}).status_code == 200
     assert client.post("/api/settings/devices/unpair", json={"name": "laptop"}, headers={**me, **SAME}).status_code == 404
     r = client.post("/api/settings/devices/unpair", json={"name": "phone"}, headers={**me, **SAME})
@@ -166,7 +166,7 @@ def test_unpair_by_name_and_self_needs_confirm(client):
 
 def test_the_page_marks_this_device(client):
     auth.add_device("phone", "p" * 64)
-    d = client.get("/api/settings", headers={"x-claude-companion-key": "p" * 64}).json()["devices"]
+    d = client.get("/api/settings", headers={"x-agent-companion-key": "p" * 64}).json()["devices"]
     assert d[0]["this_device"] is True
 
 
