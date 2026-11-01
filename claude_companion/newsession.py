@@ -206,4 +206,5 @@ def launch(project: Project, model: str = "", prompt: str = "", *, run=None, whi
         if monotonic() >= deadline:
             break
         sleep(min(VERIFY_EVERY_SECONDS, max(0.0, deadline - monotonic())))
-    return LaunchResult(False, "Claude did not start in the new tmux pane")
+    # The session is left running: whatever it shows is the best clue.
+    return LaunchResult(False, f"Claude did not start in tmux session {session} (left open to look at)", session)
