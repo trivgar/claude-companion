@@ -2,7 +2,7 @@ import json
 import time
 from datetime import datetime, timezone
 
-from claude_companion.messages import MessageIndex
+from agent_companion.messages import MessageIndex
 
 
 def _iso(ts):
@@ -173,6 +173,6 @@ def test_a_private_workspace_is_never_scanned(tmp_path):
 
 
 def test_a_private_folder_hides_its_subfolders_and_dotted_paths(tmp_path):
-    from claude_companion.messages import _folder
+    from agent_companion.messages import _folder
     assert _folder("/home/t/.sdkhost/agents/s/") == "-home-t--sdkhost-agents-s"
     assert _folder("/home/t/agent_s") == "-home-t-agent-s"

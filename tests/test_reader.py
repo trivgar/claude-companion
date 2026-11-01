@@ -2,8 +2,8 @@ import json
 import os
 from pathlib import Path
 
-from claude_companion.liveness import proc_start
-from claude_companion.reader import SessionReader
+from agent_companion.liveness import proc_start
+from agent_companion.reader import SessionReader
 
 
 def _home(tmp_path: Path, project="proj", with_tts=False, pane="t:@1.%1",
@@ -133,7 +133,7 @@ def _reply_with_usage(home, timestamp):
 
 def test_fresh_session_cache_is_not_cold(tmp_path, monkeypatch):
     now = 1_800_000_000.0
-    monkeypatch.setattr("claude_companion.reader.time.time", lambda: now)
+    monkeypatch.setattr("agent_companion.reader.time.time", lambda: now)
     home = _home(tmp_path)
     _reply_with_usage(home, "2027-01-15T08:00:00Z")
     cache = SessionReader(home).snapshot()[0]["cache"]
@@ -144,7 +144,7 @@ def test_fresh_session_cache_is_not_cold(tmp_path, monkeypatch):
 
 def test_session_two_hours_after_its_reply_has_a_cold_cache(tmp_path, monkeypatch):
     now = 1_800_000_000.0
-    monkeypatch.setattr("claude_companion.reader.time.time", lambda: now)
+    monkeypatch.setattr("agent_companion.reader.time.time", lambda: now)
     home = _home(tmp_path)
     _reply_with_usage(home, "2027-01-15T06:00:00Z")
     cache = SessionReader(home).snapshot()[0]["cache"]
@@ -154,7 +154,7 @@ def test_session_two_hours_after_its_reply_has_a_cold_cache(tmp_path, monkeypatc
 
 def test_tool_use_call_refreshes_the_cache_without_moving_last_reply(tmp_path, monkeypatch):
     now = 1_800_000_000.0
-    monkeypatch.setattr("claude_companion.reader.time.time", lambda: now)
+    monkeypatch.setattr("agent_companion.reader.time.time", lambda: now)
     home = _home(tmp_path)
     _reply_with_usage(home, "2027-01-15T07:50:00Z")
     transcript = next((home / "projects").glob("*/sid1.jsonl"))
@@ -251,33 +251,33 @@ def test_no_subagents_costs_nothing(tmp_path):
 # give it a speaker. It gets a label instead. The only self-contained source is its own opening prompt.
 
 def test_subagent_label_drops_the_prompt_lead_in():
-    from claude_companion.reader import subagent_label
+    from agent_companion.reader import subagent_label
     assert subagent_label("You are implementing Task 1: Migration path") \
         == "implementing Task 1"
 
 
 def test_subagent_label_truncates_on_a_word_boundary():
     """A chip reading "making one approved b" is worse than a shorter one."""
-    from claude_companion.reader import subagent_label
+    from agent_companion.reader import subagent_label
     got = subagent_label("You are making one approved behavior change to the categoriser")
     assert got == "making one approved…"
     assert not got.rstrip("…").endswith(" ")
 
 
 def test_subagent_label_does_not_end_on_a_dangling_word():
-    from claude_companion.reader import subagent_label
+    from agent_companion.reader import subagent_label
     got = subagent_label("You are fixing findings from a final whole-branch review")
     assert got == "fixing findings…", got
 
 
 def test_subagent_label_stops_at_a_path():
-    from claude_companion.reader import subagent_label
+    from agent_companion.reader import subagent_label
     assert subagent_label("You are auditing in `/home/user/x`") == "auditing"
 
 
 def test_subagent_label_falls_back_to_the_plain_word():
     """An unlabelled chip still says a subagent is there, which is the point."""
-    from claude_companion.reader import subagent_label
+    from agent_companion.reader import subagent_label
     assert subagent_label("") == "subagent"
     assert subagent_label("   ") == "subagent"
     assert subagent_label("`/mnt/c/x`") == "subagent"
@@ -286,7 +286,7 @@ def test_subagent_label_falls_back_to_the_plain_word():
 def test_the_most_recent_message_first():
     """Most recent message at the top, not alphabetical. Its last reply or prompt, busy or
     not; the transcript's time only when it has neither."""
-    from claude_companion.reader import order
+    from agent_companion.reader import order
     rows = [{"project": "api-main", "status": "idle", "last_reply_at": 1000, "last_activity": 5},
             {"project": "scratch", "status": "busy", "last_reply_at": 900, "last_activity": 1},
             {"project": "money", "status": "idle", "last_reply_at": 500, "last_prompt_at": 2000},
@@ -298,7 +298,7 @@ def test_the_most_recent_message_first():
 def test_one_snapshot_at_a_time(tmp_path):
     """Endpoints share one reader across a thread pool; a transcript chunk
     applied twice would count its tokens twice."""
-    from claude_companion.reader import SessionReader
+    from agent_companion.reader import SessionReader
     r = SessionReader(tmp_path)
     seen = []
     r._snapshot = lambda: seen.append(r._snap_lock.locked()) or []
@@ -384,7 +384,7 @@ def test_each_subagent_says_its_state_its_cost_and_its_start(tmp_path):
     record's timestamp), read with its label."""
     import datetime
     import time
-    from claude_companion.reader import SUBAGENT_BUSY_SECS
+    from agent_companion.reader import SUBAGENT_BUSY_SECS
     assert SUBAGENT_BUSY_SECS == 30.0
     home = _home(tmp_path)
     now = time.time()

@@ -1,7 +1,7 @@
 import sys
 import types
 
-from claude_companion import addons
+from agent_companion import addons
 
 
 def _plug(monkeypatch, **fns):
@@ -9,13 +9,13 @@ def _plug(monkeypatch, **fns):
     for k, v in fns.items():
         setattr(mod, k, v)
     monkeypatch.setitem(sys.modules, "fake_addons", mod)
-    monkeypatch.setenv("CLAUDE_COMPANION_ADDONS", "fake_addons")
+    monkeypatch.setenv("AGENT_COMPANION_ADDONS", "fake_addons")
     addons.load.cache_clear()
 
 
 def test_no_module_gives_the_defaults(monkeypatch):
-    monkeypatch.delenv("CLAUDE_COMPANION_ADDONS", raising=False)
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", "/nonexistent")
+    monkeypatch.delenv("AGENT_COMPANION_ADDONS", raising=False)
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", "/nonexistent")
     addons.load.cache_clear()
     assert addons.person(object()) is None
     assert addons.asleep() is False
@@ -89,7 +89,7 @@ def test_a_chat_target_plugin_cannot_rewrite_its_target(monkeypatch):
 def test_the_config_list_stays_private_whatever_the_plugin_says(monkeypatch, tmp_path):
     f = tmp_path / "c.toml"
     f.write_text('private_projects = ["ledger"]\n')
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(f))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(f))
     _plug(monkeypatch, private=lambda cwd, p: False)
     assert addons.private("/home/sam/ledger", "ledger") is True
     assert addons.private("/home/sam/ledger", "") is True
@@ -98,7 +98,7 @@ def test_the_config_list_stays_private_whatever_the_plugin_says(monkeypatch, tmp
 
 
 def test_a_missing_module_is_the_default_not_a_crash(monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_ADDONS", "no_such_addons_module")
+    monkeypatch.setenv("AGENT_COMPANION_ADDONS", "no_such_addons_module")
     addons.load.cache_clear()
     assert addons.load() is None
     assert addons.person(object()) is None

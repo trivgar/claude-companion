@@ -10,13 +10,13 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.reader import WAITING_DIR  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.reader import WAITING_DIR  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 TOKEN = "t" * 32
 OWNER = "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 SAME = {"origin": "http://testserver", "host": "testserver"}
 
 
@@ -25,8 +25,8 @@ def env(tmp_path, monkeypatch):
     sys.path.insert(0, str(ROOT / "examples"))
     import demo_home
     home = demo_home.build(tmp_path)
-    monkeypatch.setenv("CLAUDE_COMPANION_CLAUDE_HOME", str(home))
-    monkeypatch.setenv("CLAUDE_COMPANION_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("AGENT_COMPANION_CLAUDE_HOME", str(home))
+    monkeypatch.setenv("AGENT_COMPANION_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setattr(server, "FEATURES", ["sessions", "push"])
     yield home, TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     for f in (home / "sessions").glob("*.json"):
@@ -54,7 +54,7 @@ def test_sessions_rows_come_from_the_temp_home(env):
 
 
 def test_sessions_rows_include_card_suggestions(env, monkeypatch):
-    from claude_companion.server import chat
+    from agent_companion.server import chat
 
     def targets(rows, sessions_dir):
         return {row["name"].lower(): {"name": row["name"], "pid": row["pid"], "pane": "%1",
@@ -74,7 +74,7 @@ def test_sessions_rows_include_card_suggestions(env, monkeypatch):
 
 
 def test_sessions_rows_include_background_jobs(env, monkeypatch):
-    from claude_companion.server import sessions
+    from agent_companion.server import sessions
 
     def annotate(rows):
         for row in rows:
@@ -123,7 +123,7 @@ def test_push_key_and_subscribe_need_the_write_rules(env):
 
 def test_push_test_sends_through_the_store(env, monkeypatch):
     _, c = env
-    from claude_companion import webpush
+    from agent_companion import webpush
     sent = []
     monkeypatch.setattr(webpush.PushStore, "send", lambda self, title, body, **kw: sent.append((title, body)) or 1)
     assert c.post("/api/push/test", json={}, headers=SAME).status_code == 401

@@ -6,8 +6,8 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import auth  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import auth  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
@@ -24,7 +24,7 @@ def _coordinator(tmp_path):
 
 
 def test_missing_coordinator_is_a_plain_setup_error(tmp_path, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tmp_path / "missing"))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tmp_path / "missing"))
     monkeypatch.setattr(server, "FEATURES", ["comms"])
     client = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     response = client.get("/api/tts", headers=KEY)
@@ -38,7 +38,7 @@ def test_outbox_routes_take_and_ack_a_clip(tmp_path, monkeypatch):
     (outbox / ".seq").write_text("7\n")
     (outbox / "7.json").write_text(json.dumps({"seq": 7, "name": "Speaker", "at": 1, "duration": 1}))
     (outbox / "7.opus").write_bytes(b"OggS")
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tts))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tts))
     monkeypatch.setattr(server, "FEATURES", ["comms"])
     client = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     assert client.get("/api/tts/outbox", headers=KEY).json()["clips"][0]["seq"] == 7
@@ -52,7 +52,7 @@ def test_android_gets_refuse_requests_without_an_owner_key(tmp_path, monkeypatch
     outbox.mkdir()
     (outbox / "1.json").write_text(json.dumps({"seq": 1, "name": "Speaker", "at": 1, "duration": 1}))
     (outbox / "1.opus").write_bytes(b"OggS")
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tts))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tts))
     monkeypatch.setattr(server, "FEATURES", ["comms"])
     client = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     assert client.get("/api/tts/outbox").status_code == 401
@@ -61,7 +61,7 @@ def test_android_gets_refuse_requests_without_an_owner_key(tmp_path, monkeypatch
 
 def test_write_routes_and_mobile_registration_carry_owner_and_setup_guards(tmp_path, monkeypatch):
     tts = _coordinator(tmp_path)
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tts))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tts))
     monkeypatch.setattr(server, "FEATURES", ["comms"])
     client = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     assert client.post("/api/tts/hold", json={"minutes": 5}, headers=SAME).status_code == 401
@@ -73,9 +73,9 @@ def test_write_routes_and_mobile_registration_carry_owner_and_setup_guards(tmp_p
 def test_android_build_route_uses_settings_not_a_fixed_path(tmp_path, monkeypatch):
     tts = _coordinator(tmp_path)
     apk = tmp_path / "build.apk"
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tts))
-    monkeypatch.setenv("CLAUDE_COMPANION_APP_NAME", "Example App")
-    monkeypatch.setenv("CLAUDE_COMPANION_ANDROID_APK_FILE", str(apk))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tts))
+    monkeypatch.setenv("AGENT_COMPANION_APP_NAME", "Example App")
+    monkeypatch.setenv("AGENT_COMPANION_ANDROID_APK_FILE", str(apk))
     monkeypatch.setattr(server, "FEATURES", ["comms"])
     client = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
     assert client.get("/app/exampleapp.apk", headers=KEY).status_code == 404
@@ -85,10 +85,10 @@ def test_android_build_route_uses_settings_not_a_fixed_path(tmp_path, monkeypatc
 
 def test_a_phone_that_can_ring_is_recorded_as_the_live_calls_ringer(tmp_path, monkeypatch):
     # One registration route for the phone: comms owns it, the ring reads it.
-    from claude_companion import fcm
-    from claude_companion.server import comms as comms_routes
+    from agent_companion import fcm
+    from agent_companion.server import comms as comms_routes
     tts = _coordinator(tmp_path)
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tts))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tts))
     monkeypatch.setattr(server, "FEATURES", ["comms"])
     monkeypatch.setattr(comms_routes.commsapp, "configured", lambda: True)
     monkeypatch.setattr(comms_routes.commsapp, "register", lambda tts, token, notify, ring: {"ok": True})

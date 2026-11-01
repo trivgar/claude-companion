@@ -4,14 +4,14 @@ import time
 
 import pytest
 
-from claude_companion import mail
-from claude_companion.mail import draft as drafter, gmail, queue, voice_guide
+from agent_companion import mail
+from agent_companion.mail import draft as drafter, gmail, queue, voice_guide
 
 
 @pytest.fixture(autouse=True)
 def qdir(tmp_path, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_MAIL_DIR", str(tmp_path / "mail"))
-    monkeypatch.setenv("CLAUDE_COMPANION_VOICE_GUIDE", str(tmp_path / "voice.md"))
+    monkeypatch.setenv("AGENT_COMPANION_MAIL_DIR", str(tmp_path / "mail"))
+    monkeypatch.setenv("AGENT_COMPANION_VOICE_GUIDE", str(tmp_path / "voice.md"))
     return tmp_path / "mail"
 
 
@@ -131,8 +131,8 @@ def test_allowed_tools_name_no_send_tool():
 def test_no_send_code_in_the_mail_package_or_scripts():
     from pathlib import Path
     root = Path(mail.__file__).resolve().parents[2]
-    files = list((root / "claude_companion" / "mail").glob("*.py")) + list((root / "bin").glob("mail-*.sh")) \
-        + [root / "claude_companion" / "server" / "mail.py"]
+    files = list((root / "agent_companion" / "mail").glob("*.py")) + list((root / "bin").glob("mail-*.sh")) \
+        + [root / "agent_companion" / "server" / "mail.py"]
     for f in files:
         for line in f.read_text().splitlines():
             code = line.split("#", 1)[0]
@@ -205,7 +205,7 @@ def test_voice_guide_is_built_with_read_tools_into_the_configured_file(tmp_path,
 
 
 def test_claude_is_run_with_the_prompt_on_stdin(monkeypatch):
-    from claude_companion.mail import claude
+    from agent_companion.mail import claude
     seen = {}
 
     class P:
@@ -224,7 +224,7 @@ def test_claude_is_run_with_the_prompt_on_stdin(monkeypatch):
 # ---- walls added after the security review ----
 
 def test_headless_command_is_locked_down(monkeypatch):
-    from claude_companion.mail import claude
+    from agent_companion.mail import claude
     monkeypatch.setenv("CLAUDE_BIN", "/bin/true")
     cmd = claude.build_command(["ToolSearch", "mcp__claude_ai_Gmail__create_draft"])
     assert cmd[cmd.index("--permission-mode") + 1] == "default"
@@ -240,7 +240,7 @@ def test_headless_command_is_locked_down(monkeypatch):
 
 
 def test_headless_command_is_an_allow_list(monkeypatch):
-    from claude_companion.mail import claude
+    from agent_companion.mail import claude
     monkeypatch.setenv("CLAUDE_BIN", "/bin/true")
     cmd = claude.build_command(["ToolSearch"])
     assert cmd[cmd.index("--setting-sources") + 1] == ""
@@ -253,7 +253,7 @@ def test_headless_command_is_an_allow_list(monkeypatch):
 
 def test_headless_run_uses_an_empty_temp_cwd_and_a_minimal_env(monkeypatch):
     import os
-    from claude_companion.mail import claude
+    from agent_companion.mail import claude
     seen = {}
 
     class P:
@@ -350,7 +350,7 @@ def test_approver_prompt_fences_the_body_as_data(monkeypatch):
 
 
 def test_the_approver_gets_the_bare_address_never_a_display_name(monkeypatch):
-    from claude_companion.mail import claude as cl, gmail, validate
+    from agent_companion.mail import claude as cl, gmail, validate
     assert validate.bare_address("Sam Lee <sam@example.com>") == "sam@example.com"
     assert validate.bare_address("<sam@example.com>") == "sam@example.com"
     assert validate.bare_address("sam@example.com") == "sam@example.com"
@@ -363,7 +363,7 @@ def test_the_approver_gets_the_bare_address_never_a_display_name(monkeypatch):
 
 def test_headless_command_denies_every_configured_mcp_server(monkeypatch, tmp_path):
     import json
-    from claude_companion.mail import claude
+    from agent_companion.mail import claude
     (tmp_path / ".claude.json").write_text(json.dumps({"mcpServers": {"shop-db": {}, "notes": {}}}))
     monkeypatch.setattr(claude.Path, "home", staticmethod(lambda: tmp_path))
     monkeypatch.setenv("CLAUDE_BIN", "/bin/true")
@@ -381,7 +381,7 @@ def test_account_settings_choose_sources_and_require_a_file_for_imap(tmp_path, m
         "[mail_accounts.owner]\nsource = \"gmail\"\n"
         "[mail_accounts.other]\nsource = \"imap\"\n"
         f"credentials_file = \"{credentials}\"\n")
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config_file))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config_file))
     assert mail.account_source("owner") == "gmail"
     assert mail.account_source("other") == "imap"
     assert mail.source_for("owner").name == "gmail"
@@ -396,7 +396,7 @@ def test_inline_imap_credentials_are_not_a_mailbox(tmp_path, monkeypatch):
     config_file.write_text(
         "[mail_accounts.other]\nsource = \"imap\"\n"
         "address = \"other@example.com\"\npassword = \"not-a-file\"\n")
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config_file))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config_file))
     assert mail.ready("other") is False
 
 
@@ -404,8 +404,8 @@ def test_queue_path_comes_from_the_setting(tmp_path, monkeypatch):
     config_file = tmp_path / "config.toml"
     config_file.write_text('mail_queue_dir = "~/mail-queue"\n')
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config_file))
-    monkeypatch.delenv("CLAUDE_COMPANION_MAIL_DIR", raising=False)
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config_file))
+    monkeypatch.delenv("AGENT_COMPANION_MAIL_DIR", raising=False)
     assert queue.queue_dir() == tmp_path / "mail-queue"
 
 
@@ -483,7 +483,7 @@ class FakeImap:
 def test_imap_source_lists_reads_and_places_a_threaded_draft(tmp_path, monkeypatch):
     from email import policy
     from email.parser import BytesParser
-    from claude_companion.mail import imap
+    from agent_companion.mail import imap
 
     credentials = tmp_path / "other.json"
     credentials.write_text(json.dumps({"address": "other@example.com", "password": "app password"}))
@@ -491,7 +491,7 @@ def test_imap_source_lists_reads_and_places_a_threaded_draft(tmp_path, monkeypat
     config_file.write_text(
         "[mail_accounts.other]\nsource = \"imap\"\n"
         f"credentials_file = \"{credentials}\"\n")
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config_file))
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config_file))
     client = FakeImap()
     monkeypatch.setattr(imap, "IMAP", lambda *args, **kwargs: client)
     src = mail.source_for("other")
@@ -510,7 +510,7 @@ def test_imap_source_lists_reads_and_places_a_threaded_draft(tmp_path, monkeypat
 
 def test_imap_module_has_no_delivery_code():
     from pathlib import Path
-    from claude_companion.mail import imap
+    from agent_companion.mail import imap
 
     code = Path(imap.__file__).read_text().lower()
     assert "smtplib" not in code

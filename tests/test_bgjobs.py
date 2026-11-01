@@ -1,6 +1,6 @@
 import shlex
 
-from claude_companion import bgjobs
+from agent_companion import bgjobs
 
 
 def _proc(tmp_path):

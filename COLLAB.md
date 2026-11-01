@@ -7,13 +7,13 @@ Claudes work together without stepping on each other.
 
 - The owner, working on the PC that runs the merge queue, finishes in their
   own worktree, runs the targeted tests, then
-  `python -m claude_companion.mergeq add --summary "..."`. The merger runs the
+  `python -m agent_companion.mergeq add --summary "..."`. The merger runs the
   whole suite once, then opens and merges the PRs. See CLAUDE.md, "How work
   lands".
 - A collaborator starts a branch from `main`, pushes the branch, and opens a
   pull request. Do not push to `main`.
 - Ask the owner to queue the PR, or leave a note with your `for-<owner>` label.
-  The owner runs `python -m claude_companion.mergeq add --pr <number>`.
+  The owner runs `python -m agent_companion.mergeq add --pr <number>`.
 - The queue tests the batch with the full suite, then merges that pull request
   when it is green. It never pushes to the collaborator's branch.
 - If the batch is red, the queue records why; it does not comment on the PR,
@@ -32,9 +32,9 @@ Claudes work together without stepping on each other.
 - Set `collab_from` to the collaborator's GitHub login. Only their notes reach
   your sessions; an issue from anyone else is never shown.
 - File to the other side with
-  `python -m claude_companion.collab file --to for-a-collaborator --title "..." --body-file note.md`.
-- See your own open notes with `python -m claude_companion.collab check`.
-- Run `python -m claude_companion.collab install` once to add the session-start
+  `python -m agent_companion.collab file --to for-a-collaborator --title "..." --body-file note.md`.
+- See your own open notes with `python -m agent_companion.collab check`.
+- Run `python -m agent_companion.collab install` once to add the session-start
   hook. `uninstall` removes it.
 - When you have dealt with a note, close the issue with a one-line answer.
 

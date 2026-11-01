@@ -3,7 +3,7 @@ import pytest
 pytest.importorskip("fastapi")
 sync_api = pytest.importorskip("playwright.sync_api")
 
-from claude_companion import server  # noqa: E402
+from agent_companion import server  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64

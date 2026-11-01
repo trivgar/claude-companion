@@ -1,6 +1,6 @@
 import json
 
-from claude_companion import activity as ac
+from agent_companion import activity as ac
 
 
 def _line(kind, at, blocks):

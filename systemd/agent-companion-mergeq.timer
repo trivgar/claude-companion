@@ -1,0 +1,10 @@
+[Unit]
+Description=Merge the agent-companion queue every 15 minutes
+
+[Timer]
+# Check any change with: systemd-analyze calendar '<spec>'
+OnCalendar=*:0/15
+Persistent=true
+
+[Install]
+WantedBy=timers.target

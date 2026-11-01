@@ -1,7 +1,7 @@
 import json
 
-from claude_companion import deferred
-from claude_companion.hooks import deferred_hook
+from agent_companion import deferred
+from agent_companion.hooks import deferred_hook
 
 
 def test_hook_outputs_open_and_answered_handoffs_from_fixture_file(tmp_path, monkeypatch):
@@ -9,8 +9,8 @@ def test_hook_outputs_open_and_answered_handoffs_from_fixture_file(tmp_path, mon
     source, receiver = tmp_path / "source", tmp_path / "receiver"
     source.mkdir()
     receiver.mkdir()
-    monkeypatch.setenv("CLAUDE_COMPANION_DEFERRED_FILE", str(path))
-    monkeypatch.setenv("CLAUDE_COMPANION_DEFERRED_HOOK_STATE_DIR", str(state))
+    monkeypatch.setenv("AGENT_COMPANION_DEFERRED_FILE", str(path))
+    monkeypatch.setenv("AGENT_COMPANION_DEFERRED_HOOK_STATE_DIR", str(state))
 
     open_entry = deferred.add("review the change", by="sender", for_project="receiver", path=path, cwd=source)
     answered_entry = deferred.add("supply the result", by="sender", for_project="receiver", path=path, cwd=source)
@@ -38,8 +38,8 @@ def test_a_cleared_session_is_told_again_though_the_file_did_not_change(tmp_path
     source, receiver = tmp_path / "source", tmp_path / "receiver"
     source.mkdir()
     receiver.mkdir()
-    monkeypatch.setenv("CLAUDE_COMPANION_DEFERRED_FILE", str(path))
-    monkeypatch.setenv("CLAUDE_COMPANION_DEFERRED_HOOK_STATE_DIR", str(state))
+    monkeypatch.setenv("AGENT_COMPANION_DEFERRED_FILE", str(path))
+    monkeypatch.setenv("AGENT_COMPANION_DEFERRED_HOOK_STATE_DIR", str(state))
     deferred.add("review the change", by="sender", for_project="receiver", path=path, cwd=source)
     start = {"cwd": str(receiver), "session_id": "s", "hook_event_name": "SessionStart"}
     assert "review the change" in deferred_hook.run(start)

@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from claude_companion import changes as ch
+from agent_companion import changes as ch
 
 
 def _git(cwd, *args):

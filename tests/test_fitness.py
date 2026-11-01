@@ -1,7 +1,7 @@
 import datetime
 
-from claude_companion.fitness import summary
-from claude_companion.fitness.demo import DemoSource
+from agent_companion.fitness import summary
+from agent_companion.fitness.demo import DemoSource
 
 
 def rows(sleeps, start="2026-03-02", **extra):
@@ -90,8 +90,8 @@ from zoneinfo import ZoneInfo  # noqa: E402
 
 import pytest  # noqa: E402
 
-from claude_companion import fitness  # noqa: E402
-from claude_companion.fitness import home_assistant as ha  # noqa: E402
+from agent_companion import fitness  # noqa: E402
+from agent_companion.fitness import home_assistant as ha  # noqa: E402
 
 UTC = ZoneInfo("UTC")
 
@@ -173,14 +173,14 @@ def test_ha_never_opens_a_socket_under_pytest():
 
 
 def test_ha_config_needs_url_and_token_file(tmp_path, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_FITNESS_SOURCE", "home_assistant")
+    monkeypatch.setenv("AGENT_COMPANION_FITNESS_SOURCE", "home_assistant")
     with pytest.raises(LookupError, match="ha_url"):
         fitness.source()
     tok = tmp_path / "tok"
     tok.write_text("secret\n")
-    monkeypatch.setenv("CLAUDE_COMPANION_HA_URL", "http://ha.example.com:8123")
-    monkeypatch.setenv("CLAUDE_COMPANION_HA_TOKEN_FILE", str(tok))
-    monkeypatch.setenv("CLAUDE_COMPANION_FITNESS_SLEEP_ENTITY", "sensor.x")
+    monkeypatch.setenv("AGENT_COMPANION_HA_URL", "http://ha.example.com:8123")
+    monkeypatch.setenv("AGENT_COMPANION_HA_TOKEN_FILE", str(tok))
+    monkeypatch.setenv("AGENT_COMPANION_FITNESS_SLEEP_ENTITY", "sensor.x")
     s = fitness.source()
     assert s.entities == {"sleep_min": "sensor.x"} and s._token == "secret"
 

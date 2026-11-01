@@ -9,7 +9,7 @@ pytest.importorskip("fastapi")
 sync_api = pytest.importorskip("playwright.sync_api")
 import uvicorn  # noqa: E402
 
-from claude_companion import server  # noqa: E402
+from agent_companion import server  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
@@ -27,8 +27,8 @@ def base_url(tmp_path_factory):
     root = tmp_path_factory.mktemp("specs-page")
     config = root / "config.toml"
     config.write_text("")
-    previous = os.environ.get("CLAUDE_COMPANION_CONFIG")
-    os.environ["CLAUDE_COMPANION_CONFIG"] = str(config)
+    previous = os.environ.get("AGENT_COMPANION_CONFIG")
+    os.environ["AGENT_COMPANION_CONFIG"] = str(config)
     original = server.FEATURES
     server.FEATURES = ["specs"]
     app = server.create_app(token=TOKEN, owner_key=OWNER)
@@ -52,9 +52,9 @@ def base_url(tmp_path_factory):
     thread.join(timeout=5)
     listener.close()
     if previous is None:
-        os.environ.pop("CLAUDE_COMPANION_CONFIG", None)
+        os.environ.pop("AGENT_COMPANION_CONFIG", None)
     else:
-        os.environ["CLAUDE_COMPANION_CONFIG"] = previous
+        os.environ["AGENT_COMPANION_CONFIG"] = previous
 
 
 @pytest.fixture

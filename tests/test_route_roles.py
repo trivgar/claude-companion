@@ -3,8 +3,8 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.routing import APIRoute  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import auth  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import auth  # noqa: E402
 from routes_walk import all_routes  # noqa: E402
 
 GUARDS = {auth.require_token, auth.require_write, auth.require_hook, auth.require_person, auth.require_person_write}
@@ -28,7 +28,7 @@ def test_every_route_says_who_may_use_it():
 def test_a_person_route_takes_an_owner_or_a_person(monkeypatch):
     from fastapi import APIRouter, Depends
     from fastapi.testclient import TestClient
-    from claude_companion import addons
+    from agent_companion import addons
     owner = "o" * 64
     app = server.create_app(token="t" * 32, owner_key=owner)
     r = APIRouter()
@@ -46,7 +46,7 @@ def test_a_person_route_takes_an_owner_or_a_person(monkeypatch):
 
 
 def test_a_person_never_opens_an_owner_route(monkeypatch):
-    from claude_companion import addons
+    from agent_companion import addons
     from fastapi.testclient import TestClient
     monkeypatch.setattr(addons, "person", lambda req: {"name": "alex"})
     c = TestClient(server.create_app(token="t" * 32))

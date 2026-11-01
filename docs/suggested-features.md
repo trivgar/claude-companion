@@ -1,7 +1,7 @@
 # Suggested features for your own PC
 
 These are useful safeguards that deliberately are not part of
-claude-companion. They depend on a particular computer, its games, its cooling
+agent-companion. They depend on a particular computer, its games, its cooling
 headroom, and its weekly work budget. Give one section below to your own Claude
 Code and have it adapt the design to your installation. Keep the switch that
 turns each safeguard off under the computer owner's control, never an agent's.
@@ -52,7 +52,7 @@ requiring a real game to run.
 session's ordinary work.
 
 Use the seven-day utilisation and reset timestamp already supplied by
-`claude_companion/limits.py`. Compute a weekly pace line from the fraction of
+`agent_companion/limits.py`. Compute a weekly pace line from the fraction of
 the current usage window that has elapsed. Once utilisation is above that line,
 a `PreToolUse` hook may refuse only expensive multiplier tools, such as
 subagents and workflows. Its refusal should say that usage is ahead of the

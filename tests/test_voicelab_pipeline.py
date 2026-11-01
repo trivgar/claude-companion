@@ -6,18 +6,18 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
+from agent_companion import server  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     voices = tmp_path / "voices"
-    monkeypatch.setenv("CLAUDE_COMPANION_VOICES_DIR", str(voices))
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tmp_path / "no-coordinator"))
+    monkeypatch.setenv("AGENT_COMPANION_VOICES_DIR", str(voices))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tmp_path / "no-coordinator"))
     monkeypatch.setattr(server, "FEATURES", ["voicelab"])
     a = voices / "alpha"
     (a / "audition").mkdir(parents=True)
@@ -45,7 +45,7 @@ def test_listing_shows_the_pipelines_voices_and_stages(client):
 
 
 def test_an_empty_install_lists_nothing_and_says_where(client, tmp_path, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_VOICES_DIR", str(tmp_path / "none"))
+    monkeypatch.setenv("AGENT_COMPANION_VOICES_DIR", str(tmp_path / "none"))
     body = client.get("/api/voicelab", headers=KEY).json()
     assert body["pipeline"]["voices"] == []
     assert "voicelab/README.md" in body["now"]["text"]
@@ -71,8 +71,8 @@ def test_the_page_lists_pipeline_voices_with_auditions(tmp_path, monkeypatch):
     voices = tmp_path / "voices"
     (voices / "alpha" / "audition").mkdir(parents=True)
     (voices / "alpha" / "audition" / "one.wav").write_bytes(b"RIFFxxxx")
-    monkeypatch.setenv("CLAUDE_COMPANION_VOICES_DIR", str(voices))
-    monkeypatch.setenv("CLAUDE_COMPANION_TTS_DIR", str(tmp_path / "no-coordinator"))
+    monkeypatch.setenv("AGENT_COMPANION_VOICES_DIR", str(voices))
+    monkeypatch.setenv("AGENT_COMPANION_TTS_DIR", str(tmp_path / "no-coordinator"))
     monkeypatch.setattr(server, "FEATURES", ["voicelab"])
     srv = uvicorn.Server(uvicorn.Config(server.create_app(token=TOKEN, owner_key=OWNER),
                                         host="127.0.0.1", port=0, log_level="warning"))

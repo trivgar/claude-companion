@@ -16,7 +16,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 TTS = Path(os.environ.get("TTS_DIR") or HERE)
 STATE_DIR = Path(os.environ.get("COMMS_STATE_DIR")
-                 or Path.home() / ".local/share/claude-companion/comms")
+                 or Path.home() / ".local/share/agent-companion/comms")
 REMIND = 30
 KEEP = 200
 
@@ -40,7 +40,7 @@ def context(name: str, text: str) -> str:
 
 
 def main() -> None:
-    if os.environ.get("COMMS_JOB") or os.environ.get("CLAUDE_COMPANION_JOB"):
+    if os.environ.get("COMMS_JOB") or os.environ.get("AGENT_COMPANION_JOB"):
         return
     try:
         ev = json.load(sys.stdin)

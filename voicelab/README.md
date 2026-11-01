@@ -83,7 +83,7 @@ Batch size is picked from the card's VRAM (4 under 11 GB, 8 to 22 GB, 12
 above); override with `BATCH=`, `S1_EPOCHS=` (default 15), `S2_EPOCHS=` (default 8).
 If it runs out of memory, lower `BATCH`. Training hogs the GPU; do not game
 meanwhile. Output goes to
-`~/.local/share/claude-companion/voices/myvoice/` (`weights/gpt/*.ckpt`,
+`~/.local/share/agent-companion/voices/myvoice/` (`weights/gpt/*.ckpt`,
 `weights/sovits/*.pth`).
 
 ## 5. Audition and register
@@ -106,13 +106,13 @@ meanwhile. Output goes to
 python3 serve.py --list          # voices found
 python3 serve.py                 # http://127.0.0.1:9880
 curl -s -X POST localhost:9880/tts -H 'Content-Type: application/json' \
-  -H "X-Voice-Token: $(cat ~/.config/claude-companion/voice-token)" \
+  -H "X-Voice-Token: $(cat ~/.config/agent-companion/voice-token)" \
   -d '{"voice":"myvoice","text":"Testing one two."}' -o test.wav
 ```
 
 `GET /voices` lists names (it needs the same header). The first request loads
 the model (slow); the next are fast. It binds to loopback. Every request must
-carry `X-Voice-Token`, the contents of `~/.config/claude-companion/voice-token`
+carry `X-Voice-Token`, the contents of `~/.config/agent-companion/voice-token`
 (mode 600, made on first run).
 
 ## 7. Hook into comms

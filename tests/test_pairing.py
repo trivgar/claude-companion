@@ -7,8 +7,8 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import auth  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import auth  # noqa: E402
 
 SAME = {"origin": "http://testserver", "host": "testserver"}
 
@@ -16,8 +16,8 @@ SAME = {"origin": "http://testserver", "host": "testserver"}
 @pytest.fixture
 def paths(tmp_path, monkeypatch):
     keys, codes = tmp_path / "owner-keys.json", tmp_path / "pairing-codes.json"
-    monkeypatch.setenv("CLAUDE_COMPANION_OWNER_KEYS", str(keys))
-    monkeypatch.setenv("CLAUDE_COMPANION_PAIRING", str(codes))
+    monkeypatch.setenv("AGENT_COMPANION_OWNER_KEYS", str(keys))
+    monkeypatch.setenv("AGENT_COMPANION_PAIRING", str(codes))
     return keys, codes
 
 
@@ -99,7 +99,7 @@ def test_the_hook_token_file_is_not_an_owner_key(client, paths):
 
 
 def test_host_allowlist(monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_URL", "https://box.example.test")
+    monkeypatch.setenv("AGENT_COMPANION_URL", "https://box.example.test")
     for h in ("127.0.0.1", "127.0.0.1:8770", "localhost:1", "[::1]:8770", "::1", "box.example.test", "BOX.example.test:443"):
         assert auth.host_allowed(h), h
     for h in ("evil.example", "127.0.0.1.evil.example", "", "box.example.test.evil.example"):

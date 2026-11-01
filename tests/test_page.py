@@ -7,7 +7,7 @@ pytest.importorskip("fastapi")
 sync_api = pytest.importorskip("playwright.sync_api")
 from fastapi.testclient import TestClient  # noqa: E402,F401
 
-from claude_companion import server  # noqa: E402
+from agent_companion import server  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
@@ -35,8 +35,8 @@ USAGE = {"five_hour": {"cost_usd": 1.5, "total_tokens": 1000}, "seven_day": {"co
 def base_url(tmp_path_factory):
     import os
     d = tmp_path_factory.mktemp("home")
-    os.environ["CLAUDE_COMPANION_CLAUDE_HOME"] = str(d / ".claude")
-    os.environ["CLAUDE_COMPANION_DATA_DIR"] = str(d / "data")
+    os.environ["AGENT_COMPANION_CLAUDE_HOME"] = str(d / ".claude")
+    os.environ["AGENT_COMPANION_DATA_DIR"] = str(d / "data")
     orig = server.FEATURES
     import threading
     import uvicorn
@@ -55,8 +55,8 @@ def base_url(tmp_path_factory):
     port = srv.servers[0].sockets[0].getsockname()[1]
     yield f"http://127.0.0.1:{port}"
     srv.should_exit = True
-    os.environ.pop("CLAUDE_COMPANION_CLAUDE_HOME", None)
-    os.environ.pop("CLAUDE_COMPANION_DATA_DIR", None)
+    os.environ.pop("AGENT_COMPANION_CLAUDE_HOME", None)
+    os.environ.pop("AGENT_COMPANION_DATA_DIR", None)
 
 
 @pytest.fixture

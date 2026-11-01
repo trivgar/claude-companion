@@ -8,11 +8,11 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.routing import APIRoute  # noqa: E402
 
-from claude_companion import restore  # noqa: E402
-from claude_companion.liveness import proc_start  # noqa: E402
-from claude_companion import server  # noqa: E402
-from claude_companion.server import auth  # noqa: E402
-from claude_companion.server import restore as restore_routes  # noqa: E402
+from agent_companion import restore  # noqa: E402
+from agent_companion.liveness import proc_start  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import auth  # noqa: E402
+from agent_companion.server import restore as restore_routes  # noqa: E402
 from routes_walk import all_routes  # noqa: E402
 
 TOKEN = "t" * 32
@@ -175,7 +175,7 @@ def test_timer_installer_writes_only_its_two_units_and_uninstalls_them(tmp_path)
     assert result == {"ok": True, "directory": str(units), "interval_min": 7}
     service = (units / restore.SERVICE_NAME).read_text()
     timer = (units / restore.TIMER_NAME).read_text()
-    assert "-m claude_companion.restore snapshot" in service and "OnUnitActiveSec=7min" in timer
+    assert "-m agent_companion.restore snapshot" in service and "OnUnitActiveSec=7min" in timer
     assert calls[-1] == ["systemctl", "--user", "enable", "--now", restore.TIMER_NAME]
 
     result = restore.uninstall_timer(units, run=run)
@@ -200,7 +200,7 @@ def test_restore_routes_use_the_owner_read_and_write_guards(monkeypatch):
 
 
 def test_sessions_view_lists_missing_snapshots_and_posts_the_restore():
-    source = (Path(__file__).resolve().parents[1] / "claude_companion" / "server" / "static" / "sessions.js").read_text()
+    source = (Path(__file__).resolve().parents[1] / "agent_companion" / "server" / "static" / "sessions.js").read_text()
     assert "Restore ${missing.length} sessions" in source
     assert "CC.get('/api/restore')" in source and "CC.post('/api/restore', {})" in source
     assert "esc(r.tmux)" in source

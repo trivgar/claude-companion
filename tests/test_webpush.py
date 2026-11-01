@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from claude_companion.webpush import PushStore
+from agent_companion.webpush import PushStore
 
 
 @pytest.fixture
@@ -198,7 +198,7 @@ def test_the_classifier_does_not_match_on_the_word_timeout_alone():
     """A ConnectTimeout also says "timeout". Matching that would turn every
     unreachable-network failure into a silent success and lose the notification
     entirely -- the opposite mistake, and a worse one."""
-    from claude_companion.webpush import _is_read_timeout
+    from agent_companion.webpush import _is_read_timeout
 
     class ConnectTimeout(Exception):
         pass
@@ -220,7 +220,7 @@ def test_the_classifier_does_not_match_on_the_word_timeout_alone():
 def test_sending_with_no_subscribers_is_not_ok(tmp_path, monkeypatch):
     from fastapi.testclient import TestClient
     monkeypatch.setenv("SESSION_COMPANION_TOKEN", "t")
-    import claude_companion.server as srv
+    import agent_companion.server as srv
     monkeypatch.setattr(srv._push, "_path", tmp_path / "push.json", raising=False)
     monkeypatch.setattr(srv._push, "subscriptions", lambda: [])
     monkeypatch.setattr(srv._push, "send", lambda *a, **k: 0)
@@ -238,7 +238,7 @@ def test_sending_with_no_subscribers_is_not_ok(tmp_path, monkeypatch):
 def test_sending_to_a_real_subscriber_is_ok(tmp_path, monkeypatch):
     from fastapi.testclient import TestClient
     monkeypatch.setenv("SESSION_COMPANION_TOKEN", "t")
-    import claude_companion.server as srv
+    import agent_companion.server as srv
     monkeypatch.setattr(srv._push, "subscriptions", lambda: [{"endpoint": "e"}])
     monkeypatch.setattr(srv._push, "send", lambda *a, **k: 1)
     c = TestClient(srv.app)
@@ -252,7 +252,7 @@ def test_subscribers_that_all_reject_are_also_not_ok(tmp_path, monkeypatch):
     and the caller needs to fall back either way."""
     from fastapi.testclient import TestClient
     monkeypatch.setenv("SESSION_COMPANION_TOKEN", "t")
-    import claude_companion.server as srv
+    import agent_companion.server as srv
     monkeypatch.setattr(srv._push, "subscriptions", lambda: [{"endpoint": "e"}, {"endpoint": "f"}])
     monkeypatch.setattr(srv._push, "send", lambda *a, **k: 0)
     c = TestClient(srv.app)
@@ -304,7 +304,7 @@ def test_a_push_waits_for_a_sleeping_phone_and_wakes_it():
     """Pushes seemed to stop until the dashboard was reopened. pywebpush's TTL default of 0 dropped every push the
     dozing phone could not take at that instant."""
     import json
-    from claude_companion.webpush import pick_delivery
+    from agent_companion.webpush import pick_delivery
     assert pick_delivery(json.dumps({"tag": "ask-1a2b"})) == (86400, "high")
     assert pick_delivery(json.dumps({"tag": "tts-autohold-1"})) == (86400, "high")
     assert pick_delivery(json.dumps({"tag": "sub-Cave"})) == (300, "normal")
@@ -314,7 +314,7 @@ def test_a_push_waits_for_a_sleeping_phone_and_wakes_it():
 def test_a_newer_ask_buzzes_even_though_it_replaces_the_older(tmp_path):
     """needs-<Name> replaces in place (one per agent) but must not be silent."""
     import json
-    from claude_companion.webpush import PushStore
+    from agent_companion.webpush import PushStore
     ps = PushStore(tmp_path)
     ps.subscriptions = lambda: [{"endpoint": "https://x/1", "keys": {}}]
     got = []
@@ -326,6 +326,6 @@ def test_a_newer_ask_buzzes_even_though_it_replaces_the_older(tmp_path):
 
 
 def test_no_icons_module_means_no_picture():
-    from claude_companion.webpush import _icons
+    from agent_companion.webpush import _icons
     data, url = _icons()
     assert data("x", "y") == "" and url("x", "y") == ""

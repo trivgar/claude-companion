@@ -7,21 +7,21 @@ import pytest
 pytest.importorskip("fastapi")
 from starlette.requests import Request  # noqa: E402
 
-from claude_companion import addons  # noqa: E402
-from claude_companion.server import asks  # noqa: E402
+from agent_companion import addons  # noqa: E402
+from agent_companion.server import asks  # noqa: E402
 
 
 def _plug(monkeypatch, fn):
     module = types.ModuleType("fake_ask_addons")
     module.on_ask = fn
     monkeypatch.setitem(sys.modules, "fake_ask_addons", module)
-    monkeypatch.setenv("CLAUDE_COMPANION_ADDONS", "fake_ask_addons")
+    monkeypatch.setenv("AGENT_COMPANION_ADDONS", "fake_ask_addons")
     addons.load.cache_clear()
 
 
 @pytest.fixture
 def asks_dir(monkeypatch, tmp_path):
-    monkeypatch.setenv("CLAUDE_COMPANION_ASKS", str(tmp_path / "asks"))
+    monkeypatch.setenv("AGENT_COMPANION_ASKS", str(tmp_path / "asks"))
     addons.load.cache_clear()
     yield
     addons.load.cache_clear()
@@ -44,7 +44,7 @@ def test_created_plugin_can_replace_the_core_push(asks_dir, monkeypatch):
 
 
 def test_created_keeps_the_core_push_without_a_plugin(asks_dir, monkeypatch):
-    monkeypatch.delenv("CLAUDE_COMPANION_ADDONS", raising=False)
+    monkeypatch.delenv("AGENT_COMPANION_ADDONS", raising=False)
     addons.load.cache_clear()
     pushed = []
     monkeypatch.setattr(asks, "_push", lambda ask: pushed.append(ask["id"]))

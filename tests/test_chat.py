@@ -1,4 +1,4 @@
-"""Chat (claude_companion/server/chat.py): the owner directs sessions from the
+"""Chat (agent_companion/server/chat.py): the owner directs sessions from the
 page. Nothing here touches tmux: every run is a fake."""
 import json
 
@@ -7,12 +7,12 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import asks, chat  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import asks, chat  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-KEY = {"x-claude-companion-key": OWNER}
+KEY = {"x-agent-companion-key": OWNER}
 SAME = {"origin": "http://testserver", "host": "testserver"}
 MINE = {**SAME, **KEY}
 KNOWN = {"ada": {"name": "Ada", "pid": 11, "pane": "%3", "cwd": "/w/proj", "session_id": "s1",
@@ -203,9 +203,9 @@ def test_conversation_reads_further_back_when_the_tail_is_short(tmp_path):
 
 @pytest.fixture
 def client(monkeypatch, tmp_path):
-    monkeypatch.setenv("CLAUDE_COMPANION_CHAT_LOG", str(tmp_path / "chat.jsonl"))
-    monkeypatch.setenv("CLAUDE_COMPANION_ASKS", str(tmp_path / "asks"))
-    monkeypatch.setenv("CLAUDE_COMPANION_CLAUDE_HOME", str(tmp_path / "claude"))
+    monkeypatch.setenv("AGENT_COMPANION_CHAT_LOG", str(tmp_path / "chat.jsonl"))
+    monkeypatch.setenv("AGENT_COMPANION_ASKS", str(tmp_path / "asks"))
+    monkeypatch.setenv("AGENT_COMPANION_CLAUDE_HOME", str(tmp_path / "claude"))
     monkeypatch.setattr(server, "FEATURES", ["chat"])
     monkeypatch.setattr(chat, "known", lambda: KNOWN)
     c = TestClient(server.create_app(token=TOKEN, owner_key=OWNER))
@@ -275,7 +275,7 @@ def test_transcript_path_names_the_folder_like_claude_code(tmp_path):
 
 
 def test_chat_reads_the_same_claude_home_key_as_sessions(monkeypatch, tmp_path):
-    from claude_companion.server import sessions
-    monkeypatch.setenv("CLAUDE_COMPANION_CLAUDE_HOME", str(tmp_path / "h"))
+    from agent_companion.server import sessions
+    monkeypatch.setenv("AGENT_COMPANION_CLAUDE_HOME", str(tmp_path / "h"))
     monkeypatch.setenv("CLAUDE_HOME", str(tmp_path / "other"))
     assert chat.claude_home() == sessions.claude_home() == tmp_path / "h"

@@ -3,8 +3,8 @@ import subprocess
 
 from fastapi.routing import APIRoute
 
-from claude_companion.server import auth, files  # noqa: E402
-from claude_companion.server.features import FEATURES  # noqa: E402
+from agent_companion.server import auth, files  # noqa: E402
+from agent_companion.server.features import FEATURES  # noqa: E402
 
 
 def _git(root, *args):
@@ -34,8 +34,8 @@ def project(tmp_path, monkeypatch):
     _git(root, "commit", "-qm", "initial")
     config_file = tmp_path / "config.toml"
     config_file.write_text(f'[projects]\nworkspace = "{root}"\n')
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(config_file))
-    monkeypatch.delenv("CLAUDE_COMPANION_PROJECTS", raising=False)
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(config_file))
+    monkeypatch.delenv("AGENT_COMPANION_PROJECTS", raising=False)
     return root, outside
 
 

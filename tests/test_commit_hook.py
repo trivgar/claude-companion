@@ -1,7 +1,7 @@
 import io
 import json
 
-from claude_companion.hooks import commit_hook as hook
+from agent_companion.hooks import commit_hook as hook
 
 
 class Result:

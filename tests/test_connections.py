@@ -5,12 +5,12 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import connections  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import connections  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
-H = {"x-claude-companion-key": OWNER}
+H = {"x-agent-companion-key": OWNER}
 W = {**H, "content-type": "application/json", "origin": "http://testserver"}
 
 GOOD = {
@@ -120,7 +120,7 @@ def test_probes_never_run_under_pytest_without_injection(client, monkeypatch):
 
 def test_routes_need_the_owner_key(client):
     assert client.get("/api/connections").status_code == 401
-    assert client.get("/api/connections", headers={"x-claude-companion-token": TOKEN}).status_code == 401
+    assert client.get("/api/connections", headers={"x-agent-companion-token": TOKEN}).status_code == 401
     assert client.post("/api/connections/recheck", headers={"content-type": "application/json",
                                                            "origin": "http://testserver"}, json={}).status_code == 401
     assert client.post("/api/connections/recheck", headers=H).status_code == 415

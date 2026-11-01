@@ -4,8 +4,8 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from claude_companion import restart, server  # noqa: E402
-from claude_companion.server import auth  # noqa: E402
+from agent_companion import restart, server  # noqa: E402
+from agent_companion.server import auth  # noqa: E402
 from routes_walk import all_routes  # noqa: E402
 
 
@@ -16,7 +16,7 @@ class Result:
 
 
 def _package(tmp_path):
-    package = tmp_path / "claude_companion"
+    package = tmp_path / "agent_companion"
     package.mkdir()
     (package / "module.py").write_text("x = 1\n")
     return package

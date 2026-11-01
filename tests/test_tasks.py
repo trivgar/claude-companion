@@ -1,10 +1,10 @@
-"""A session's workflows and helpers as cards (claude_companion.tasks)."""
+"""A session's workflows and helpers as cards (agent_companion.tasks)."""
 from __future__ import annotations
 
 import json
 import os
 
-from claude_companion import tasks
+from agent_companion import tasks
 
 
 def _touch(p, at):

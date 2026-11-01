@@ -1,5 +1,5 @@
-# ~/.config/claude-companion/config.toml
-# Every key is optional; CLAUDE_COMPANION_<KEY> in the environment wins.
+# ~/.config/agent-companion/config.toml
+# Every key is optional; AGENT_COMPANION_<KEY> in the environment wins.
 
 # The dashboard server
 server_port = 8770
@@ -20,7 +20,7 @@ app_name = "Companion"
 # Where your sessions live and where the app keeps its own files
 # claude_home = "~/.claude"
 # codex_home = "~/.codex"      # optional: show Codex plan limits from local rollout logs
-# data_dir = "~/.local/share/claude-companion"
+# data_dir = "~/.local/share/agent-companion"
 
 # Scoreboard: days in which a later commit can count as rework. It reads only
 # projects listed below and keeps its cache and owner marks in data_dir.
@@ -28,7 +28,7 @@ app_name = "Companion"
 
 # Shared deferred work and cross-project handoffs.  The default file is
 # deferred.md in data_dir.  Entries added from the dashboard use this label.
-# deferred_file = "~/.local/share/claude-companion/deferred.md"
+# deferred_file = "~/.local/share/agent-companion/deferred.md"
 # deferred_by = "owner"
 
 # Restore snapshots: saved every five minutes by the optional user timer.
@@ -68,7 +68,7 @@ app_name = "Companion"
 # fitness_sleep_goal_min = 420
 # fitness_work_days = "mon,tue,wed,thu,fri"   # mornings you get up for work; leave out for no split
 # ha_url = "http://ha.example.com:8123"
-# ha_token_file = "~/.config/claude-companion/ha-token"   # a 600 file; never the token itself
+# ha_token_file = "~/.config/agent-companion/ha-token"   # a 600 file; never the token itself
 # fitness_sleep_entity = "sensor.example_sleep_minutes_asleep"
 # fitness_hr_entity = "sensor.example_resting_heart_rate"
 # fitness_steps_entity = "sensor.example_daily_steps"

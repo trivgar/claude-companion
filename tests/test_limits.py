@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from claude_companion import limits
+from agent_companion import limits
 
 
 def _creds(tmp_path, token="tok-abc", expires_ms=None):

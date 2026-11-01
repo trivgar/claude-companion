@@ -1,4 +1,4 @@
-from claude_companion.pricing import (
+from agent_companion.pricing import (
     cache_read_multiplier, context_limit, cost_usd, is_priced, rewarm_usd,
     warm_usd,
 )

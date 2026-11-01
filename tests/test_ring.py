@@ -2,7 +2,7 @@
 import time
 from datetime import datetime
 
-from claude_companion import ring
+from agent_companion import ring
 
 NOW = datetime(2026, 10, 28, 15, 0).timestamp()
 
@@ -241,8 +241,8 @@ def test_tick_keeps_the_rung_asks_in_the_record(tmp_path):
 def test_the_settings_set_the_timing(monkeypatch, tmp_path):
     f = tmp_path / "c.toml"
     f.write_text("ring_after_min = 5\nring_gap_min = 1\nring_day_max = 2\n")
-    monkeypatch.setenv("CLAUDE_COMPANION_CONFIG", str(f))
-    from claude_companion import ring
+    monkeypatch.setenv("AGENT_COMPANION_CONFIG", str(f))
+    from agent_companion import ring
     assert ring.ring_after_s() == 300 and ring.gap_s() == 60 and ring.day_max() == 2
 
 
@@ -257,7 +257,7 @@ def test_a_claim_that_did_not_open_a_call_is_released_once(tmp_path):
 
 
 def test_a_private_projects_worktree_never_rings_with_its_words(monkeypatch):
-    from claude_companion import livecall
+    from agent_companion import livecall
     monkeypatch.setattr(livecall, "_repo_name", lambda cwd: "ledger")
     monkeypatch.setattr(ring.addons, "private", lambda cwd, project: project == "ledger")
     rows = [{"session_id": "s1", "cwd": "/work/ledger-fix-branch"}]

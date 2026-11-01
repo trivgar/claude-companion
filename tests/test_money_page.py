@@ -5,8 +5,8 @@ import pytest
 pytest.importorskip("fastapi")
 sync_api = pytest.importorskip("playwright.sync_api")
 
-from claude_companion import money, server  # noqa: E402
-from claude_companion.money import demo  # noqa: E402
+from agent_companion import money, server  # noqa: E402
+from agent_companion.money import demo  # noqa: E402
 
 TOKEN, OWNER = "t" * 32, "o" * 64
 
@@ -33,11 +33,11 @@ def base_url():
     import time
     import uvicorn
     money.register("gappy", Gappy)
-    orig, prev = server.FEATURES, os.environ.get("CLAUDE_COMPANION_MONEY_SOURCE")
+    orig, prev = server.FEATURES, os.environ.get("AGENT_COMPANION_MONEY_SOURCE")
     server.FEATURES = ["money"]
     app = server.create_app(token=TOKEN, owner_key=OWNER)
     server.FEATURES = orig
-    os.environ["CLAUDE_COMPANION_MONEY_SOURCE"] = "demo"
+    os.environ["AGENT_COMPANION_MONEY_SOURCE"] = "demo"
     srv = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=0, log_level="warning"))
     threading.Thread(target=srv.run, daemon=True).start()
     for _ in range(100):
@@ -47,9 +47,9 @@ def base_url():
     yield f"http://127.0.0.1:{srv.servers[0].sockets[0].getsockname()[1]}"
     srv.should_exit = True
     if prev is None:
-        os.environ.pop("CLAUDE_COMPANION_MONEY_SOURCE", None)
+        os.environ.pop("AGENT_COMPANION_MONEY_SOURCE", None)
     else:
-        os.environ["CLAUDE_COMPANION_MONEY_SOURCE"] = prev
+        os.environ["AGENT_COMPANION_MONEY_SOURCE"] = prev
 
 
 def _page(p, base_url):
@@ -86,7 +86,7 @@ def test_demo_panel_fits_and_is_labelled(base_url):
 def test_a_missing_figure_is_a_dash(base_url):
     with sync_api.sync_playwright() as p:
         b, pg = _page(p, base_url)
-        os.environ["CLAUDE_COMPANION_MONEY_SOURCE"] = "gappy"
+        os.environ["AGENT_COMPANION_MONEY_SOURCE"] = "gappy"
         try:
             pg.goto(f"{base_url}/")
             pg.wait_for_selector(".mnw svg")
@@ -95,19 +95,19 @@ def test_a_missing_figure_is_a_dash(base_url):
             assert row.locator(".amt").inner_text() == "–"
             assert pg.locator(".mflow svg text", has_text="–").count() == 1
         finally:
-            os.environ["CLAUDE_COMPANION_MONEY_SOURCE"] = "demo"
+            os.environ["AGENT_COMPANION_MONEY_SOURCE"] = "demo"
         b.close()
 
 
 def test_unset_source_points_at_the_docs(base_url):
     with sync_api.sync_playwright() as p:
         b, pg = _page(p, base_url)
-        os.environ["CLAUDE_COMPANION_MONEY_SOURCE"] = ""
+        os.environ["AGENT_COMPANION_MONEY_SOURCE"] = ""
         try:
             pg.goto(f"{base_url}/")
             pg.wait_for_selector("section[data-id=money] .empty")
             body = _clean(pg)
             assert "No money source set up" in body and "docs/money-sources.md" in body
         finally:
-            os.environ["CLAUDE_COMPANION_MONEY_SOURCE"] = "demo"
+            os.environ["AGENT_COMPANION_MONEY_SOURCE"] = "demo"
         b.close()

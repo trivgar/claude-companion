@@ -6,8 +6,8 @@ fastapi = pytest.importorskip("fastapi")
 from fastapi import APIRouter, Depends  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-from claude_companion import server  # noqa: E402
-from claude_companion.server import auth  # noqa: E402
+from agent_companion import server  # noqa: E402
+from agent_companion.server import auth  # noqa: E402
 
 TOKEN = "t" * 32
 

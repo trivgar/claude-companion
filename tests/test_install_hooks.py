@@ -3,7 +3,7 @@ import json
 import pytest
 
 pytest.importorskip("fastapi")
-from claude_companion.server import install_hooks as ih  # noqa: E402
+from agent_companion.server import install_hooks as ih  # noqa: E402
 
 OTHER = {"matcher": "Bash", "hooks": [{"type": "command", "command": "python3 /x/other.py"}]}
 
@@ -19,17 +19,17 @@ def test_it_adds_hooks_after_a_backup_and_keeps_the_rest(tmp_path):
     ih.run(p, python="/py")
     got = json.loads(p.read_text())
     assert got["model"] == "x" and got["hooks"]["PreToolUse"][0] == OTHER
-    cmd = "/py -m claude_companion.hooks.permission_hook"
+    cmd = "/py -m agent_companion.hooks.permission_hook"
     assert got["hooks"]["PreToolUse"][1]["matcher"] == "AskUserQuestion"
     assert got["hooks"]["PreToolUse"][1]["hooks"][0]["command"] == cmd
     assert got["hooks"]["PermissionRequest"][0]["hooks"][0]["command"] == cmd
     commit = got["hooks"]["PostToolUse"][0]
     assert commit["matcher"] == "Bash"
-    assert commit["hooks"][0]["command"] == "/py -m claude_companion.hooks.commit_hook"
+    assert commit["hooks"][0]["command"] == "/py -m agent_companion.hooks.commit_hook"
     for event in ("SessionStart", "UserPromptSubmit"):
         hook = got["hooks"][event][0]
         assert hook["matcher"] == ".*"
-        assert hook["hooks"][0]["command"] == "/py -m claude_companion.hooks.deferred_hook"
+        assert hook["hooks"][0]["command"] == "/py -m agent_companion.hooks.deferred_hook"
     baks = list(tmp_path.glob("settings.json.bak-*"))
     assert len(baks) == 1 and json.loads(baks[0].read_text())["model"] == "x"
 

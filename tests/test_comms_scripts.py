@@ -32,7 +32,7 @@ def env(tmp_path):
     e.update(HOME=str(tmp_path / "home"), PATH=f"{bin_}:{os.environ['PATH']}",
              COMMS_STATE_DIR=str(tmp_path / "state"), COMMS_CLIPS_DIR=str(tmp_path / "clips"),
              PIPER_VOICES=str(voices), TTS_SESSION_KEY="k1", TTS_SPEAKER="Juno")
-    for k in ("PIPER_BIN", "COMMS_LOCAL_PLAY", "COMMS_JOB", "CLAUDE_COMPANION_JOB", "TTS_DIR"):
+    for k in ("PIPER_BIN", "COMMS_LOCAL_PLAY", "COMMS_JOB", "AGENT_COMPANION_JOB", "TTS_DIR"):
         e.pop(k, None)
     e["tmp"] = str(tmp_path)
     return e
@@ -135,7 +135,7 @@ def test_get_claims_the_first_free_name_and_jobs_get_none(env):
     i = str(COMMS / "identity.sh")
     assert run(env, "bash", i, "get").stdout.strip() == "Juno"
     assert run({**env, "TTS_SESSION_KEY": "k2"}, "bash", i, "get").stdout.strip() == "Delia"
-    assert run({**env, "TTS_SESSION_KEY": "k3", "CLAUDE_COMPANION_JOB": "1"}, "bash", i, "get").stdout == ""
+    assert run({**env, "TTS_SESSION_KEY": "k3", "AGENT_COMPANION_JOB": "1"}, "bash", i, "get").stdout == ""
 
 
 def test_speak_uses_the_session_name_when_no_speaker_is_given(env):
@@ -285,7 +285,7 @@ def _voice_server(tmp_path, status=200):
 def _server_env(env, tmp_path, port):
     cast = tmp_path / "cast.tsv"
     cast.write_text("Juno\tserver:myvoice\nWren\ten_GB-alba-medium\n")
-    cfg = tmp_path / "xdg" / "claude-companion"
+    cfg = tmp_path / "xdg" / "agent-companion"
     cfg.mkdir(parents=True)
     (cfg / "voice-token").write_text("tok123\n")
     return {**env, "COMMS_CAST": str(cast), "XDG_CONFIG_HOME": str(tmp_path / "xdg"),

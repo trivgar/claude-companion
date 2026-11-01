@@ -1,5 +1,5 @@
 """Remote voice hosts are configured data, never built-in machines."""
-from claude_companion import voices
+from agent_companion import voices
 
 
 def test_absent_host_and_cast_files_need_no_network(tmp_path):

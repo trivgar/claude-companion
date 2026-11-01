@@ -37,7 +37,7 @@ is purged after days, and the REST API does not serve statistics.
 
 1. In Home Assistant, open your profile page, scroll to "Long-lived access
    tokens" and create one. Save it in a file only you can read:
-   `install -m 600 /dev/null ~/.config/claude-companion/ha-token` then paste the
+   `install -m 600 /dev/null ~/.config/agent-companion/ha-token` then paste the
    token into it. The config holds the file's path, never the token.
 2. Find the entity ids: Settings, Devices and services, Entities, search for
    "sleep", "heart", "steps", "distance", "weight". The id is the
@@ -49,7 +49,7 @@ is purged after days, and the REST API does not serve statistics.
 ```toml
 fitness_source = "home_assistant"
 ha_url = "http://ha.example.com:8123"
-ha_token_file = "~/.config/claude-companion/ha-token"
+ha_token_file = "~/.config/agent-companion/ha-token"
 fitness_sleep_entity = "sensor.example_sleep_minutes_asleep"
 fitness_hr_entity = "sensor.example_resting_heart_rate"
 fitness_steps_entity = "sensor.example_daily_steps"
@@ -79,7 +79,7 @@ once every ten minutes.
 
 Anything that can list one row per day can be a source: a Google Health
 Connect export, a Garmin Connect download, Apple Health's `export.xml`. Ask a
-Claude to write it. Give it this file and `claude_companion/fitness/__init__.py`.
+Claude to write it. Give it this file and `agent_companion/fitness/__init__.py`.
 A source is a class with `name`, `demo = False`, and two methods:
 
 ```python
@@ -93,8 +93,8 @@ class FitnessSource(Protocol):
         """{source: 'Garmin export', as_of: 'YYYY-MM-DD' or None}"""
 ```
 
-Save it as `claude_companion/fitness/<name>.py` and register it at the bottom
-of `claude_companion/fitness/__init__.py`:
+Save it as `agent_companion/fitness/<name>.py` and register it at the bottom
+of `agent_companion/fitness/__init__.py`:
 
 ```python
 register("garmin", lambda: GarminSource(...))

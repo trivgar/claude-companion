@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from claude_companion import scoreboard
+from agent_companion import scoreboard
 
 
 NOW = 2_000_000_000.0
@@ -118,8 +118,8 @@ def test_unconfigured_repositories_are_listed_as_skipped(tmp_path, repository):
 
 def test_scoreboard_routes_use_owner_read_and_same_origin_write_guards():
     pytest.importorskip("fastapi")
-    from claude_companion.server import auth
-    from claude_companion.server import scoreboard as route
+    from agent_companion.server import auth
+    from agent_companion.server import scoreboard as route
 
     get_route = next(item for item in route.router.routes if item.path == "/api/scoreboard" and "GET" in item.methods)
     mark_route = next(item for item in route.router.routes if item.path == "/api/scoreboard/mark" and "POST" in item.methods)

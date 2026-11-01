@@ -2,7 +2,7 @@ import multiprocessing
 
 import pytest
 
-from claude_companion import deferred
+from agent_companion import deferred
 
 
 def _concurrent_add(path, cwd, number):
@@ -55,7 +55,7 @@ def test_answer_marks_a_handoff_then_done_backs_it_up_and_logs_it(tmp_path):
 
 def test_cli_add_list_and_no_match_use_the_configured_file(tmp_path, monkeypatch, capsys):
     path = tmp_path / "backlog.md"
-    monkeypatch.setenv("CLAUDE_COMPANION_DEFERRED_FILE", str(path))
+    monkeypatch.setenv("AGENT_COMPANION_DEFERRED_FILE", str(path))
     assert deferred.main(["add", "--by", "owner", "write a test", "after review"]) == 0
     assert "write a test" in capsys.readouterr().out
     assert deferred.main(["--list"]) == 0

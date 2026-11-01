@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from claude_companion import fcm, livecall
+from agent_companion import fcm, livecall
 
 NOW = time.mktime((2027, 1, 15, 12, 0, 0, 0, 0, -1))
 

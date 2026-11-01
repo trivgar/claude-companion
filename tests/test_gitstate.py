@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from claude_companion.gitstate import GitState, repo_root
+from agent_companion.gitstate import GitState, repo_root
 
 
 def _git(cwd, *args):
@@ -119,7 +119,7 @@ def test_polling_never_takes_the_index_lock(tmp_path, monkeypatch):
     back, so polling every repo with a live session fought the user's own git --
     it cost a `git add` with "Another git process seems to be running". A
     dashboard must not make the repo it watches harder to use."""
-    import claude_companion.gitstate as gs
+    import agent_companion.gitstate as gs
 
     seen = {}
 
@@ -141,7 +141,7 @@ def test_the_real_git_honours_it(tmp_path):
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     (tmp_path / "f.txt").write_text("hi\n")
 
-    import claude_companion.gitstate as gs
+    import agent_companion.gitstate as gs
     out = gs._run(tmp_path, "status", "--porcelain=v1")
     assert out is not None and "f.txt" in out
     assert not (tmp_path / ".git" / "index.lock").exists()

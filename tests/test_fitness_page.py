@@ -6,7 +6,7 @@ import pytest
 pytest.importorskip("fastapi")
 sync_api = pytest.importorskip("playwright.sync_api")
 
-from claude_companion import server  # noqa: E402
+from agent_companion import server  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
@@ -17,9 +17,9 @@ def base_url():
     import threading
     import time
     import uvicorn
-    os.environ["CLAUDE_COMPANION_FITNESS_SOURCE"] = "demo"
-    os.environ["CLAUDE_COMPANION_UNITS"] = "imperial"
-    os.environ["CLAUDE_COMPANION_FITNESS_WORK_DAYS"] = "mon,tue,wed,thu,fri"
+    os.environ["AGENT_COMPANION_FITNESS_SOURCE"] = "demo"
+    os.environ["AGENT_COMPANION_UNITS"] = "imperial"
+    os.environ["AGENT_COMPANION_FITNESS_WORK_DAYS"] = "mon,tue,wed,thu,fri"
     orig = server.FEATURES
     server.FEATURES = ["fitness"]
     app = server.create_app(token=TOKEN, owner_key=OWNER)
@@ -33,7 +33,7 @@ def base_url():
     yield f"http://127.0.0.1:{srv.servers[0].sockets[0].getsockname()[1]}"
     srv.should_exit = True
     for k in ("FITNESS_SOURCE", "UNITS", "FITNESS_WORK_DAYS"):
-        os.environ.pop("CLAUDE_COMPANION_" + k, None)
+        os.environ.pop("AGENT_COMPANION_" + k, None)
 
 
 def _open(p, base_url, route=None):
@@ -76,7 +76,7 @@ def test_no_source_says_so(base_url):
 
 
 def test_an_all_gaps_week_draws_gaps_not_zeros(base_url):
-    from claude_companion.fitness import summary
+    from agent_companion.fitness import summary
     rows = [{"date": f"2026-03-{d:02d}", "sleep_min": None, "resting_hr": None, "steps": None,
              "distance_km": None, "weight_kg": None} for d in range(1, 15)]
     view = {"ok": True, "demo": False, "source": "Home Assistant", "as_of": None, **summary.view(rows)}

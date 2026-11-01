@@ -1,5 +1,5 @@
 """Speech coordinator controls use a temporary coordinator only."""
-from claude_companion import addons, agentvibes, commsbusy
+from agent_companion import addons, agentvibes, commsbusy
 
 
 def _tts(tmp_path):
@@ -39,6 +39,6 @@ def test_manual_hold_and_the_expiring_mute_are_plain_state(tmp_path):
 
 
 def test_no_addon_busy_reason_is_a_safe_default(monkeypatch, tmp_path):
-    monkeypatch.delenv("CLAUDE_COMPANION_ADDONS", raising=False)
+    monkeypatch.delenv("AGENT_COMPANION_ADDONS", raising=False)
     addons.load.cache_clear()
     assert commsbusy.reason() is None

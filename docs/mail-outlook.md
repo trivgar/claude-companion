@@ -1,10 +1,10 @@
 # Adding Outlook mail
 
-The mail drafter reads new mail, writes replies for you to approve, and puts approved replies in your drafts folder. Gmail ships in the box. Outlook (Microsoft 365 or outlook.com) is a second provider you add by writing one file, `claude_companion/mail/outlook.py`. This page is for a Claude doing that for its owner.
+The mail drafter reads new mail, writes replies for you to approve, and puts approved replies in your drafts folder. Gmail ships in the box. Outlook (Microsoft 365 or outlook.com) is a second provider you add by writing one file, `agent_companion/mail/outlook.py`. This page is for a Claude doing that for its owner.
 
 ## The rule
 
-Mail cannot send. Not through a flag, not through a helper. The interface in `claude_companion/mail/__init__.py` has three methods and none of them sends, replies or forwards, and `tests/test_mail.py::test_no_source_can_send` fails if any registered source has an attribute whose name contains `send`, `reply` or `forward` (any case). Name your helpers accordingly (`make_draft`, not `create_reply`).
+Mail cannot send. Not through a flag, not through a helper. The interface in `agent_companion/mail/__init__.py` has three methods and none of them sends, replies or forwards, and `tests/test_mail.py::test_no_source_can_send` fails if any registered source has an attribute whose name contains `send`, `reply` or `forward` (any case). Name your helpers accordingly (`make_draft`, not `create_reply`).
 
 ## The interface
 
@@ -23,7 +23,7 @@ class MailSource(Protocol):
 
 Use plain `urllib` plus the `msal` package (`pip install msal`), so the core stays dependency-free.
 
-1. The owner registers an app once in Microsoft Entra ("App registrations"): a public client, "Allow public client flows" on, no redirect URI. Note the application (client) id; put it in `~/.config/claude-companion/config.toml` as `outlook_client_id`. Use tenant `common` unless the owner's organization says otherwise.
+1. The owner registers an app once in Microsoft Entra ("App registrations"): a public client, "Allow public client flows" on, no redirect URI. Note the application (client) id; put it in `~/.config/agent-companion/config.toml` as `outlook_client_id`. Use tenant `common` unless the owner's organization says otherwise.
 2. Sign in with the device-code flow, so no browser has to run on the server:
    ```python
    app = msal.PublicClientApplication(client_id, authority="https://login.microsoftonline.com/common",
@@ -32,7 +32,7 @@ Use plain `urllib` plus the `msal` package (`pip install msal`), so the core sta
    print(flow["message"])                      # the owner opens the URL and types the code
    result = app.acquire_token_by_device_flow(flow)
    ```
-   Keep the MSAL token cache in `~/.config/claude-companion/outlook-token.json`, mode 600, and use `acquire_token_silent` afterwards. Add a `python -m claude_companion.mail outlook-login` command if you want the owner to run the sign-in once by hand.
+   Keep the MSAL token cache in `~/.config/agent-companion/outlook-token.json`, mode 600, and use `acquire_token_silent` afterwards. Add a `python -m agent_companion.mail outlook-login` command if you want the owner to run the sign-in once by hand.
 3. **Request the `Mail.ReadWrite` scope and nothing else. Never request `Mail.Send`.** Without that permission the token cannot send even if a bug tried. `Mail.ReadWrite` is needed because creating a draft is a write; it does not allow sending.
 
 ## The three calls
@@ -47,7 +47,7 @@ Keep message ids URL-safe before putting them in a path; Graph ids contain `=` a
 
 The factory receives the configured account id, so make the source constructor
 accept it (for example, `def __init__(self, account: str = "owner")`) and keep
-it on `self.account`. At the bottom of `claude_companion/mail/__init__.py`,
+it on `self.account`. At the bottom of `agent_companion/mail/__init__.py`,
 register it with that id:
 
 ```python
@@ -58,7 +58,7 @@ def _outlook(account: str) -> MailSource:
 register("outlook", _outlook)
 ```
 
-Then set this in `~/.config/claude-companion/config.toml`:
+Then set this in `~/.config/agent-companion/config.toml`:
 
 ```toml
 [mail_accounts.owner]
@@ -68,7 +68,7 @@ source = "outlook"
 `voice-guide` currently asks Gmail's read tools, so do not run it for Outlook.
 Build the private voice guide from the text of about 30 sent messages (or add a
 Graph-reading variant) and keep it at
-`~/.config/claude-companion/voice-guide.md`, mode 600.
+`~/.config/agent-companion/voice-guide.md`, mode 600.
 
 ## Tests
 
@@ -82,4 +82,4 @@ cp systemd/mail-draft.service systemd/mail-draft.timer ~/.config/systemd/user/
 systemctl --user daemon-reload && systemctl --user enable --now mail-draft.timer
 ```
 
-The service assumes the repo is at `~/claude-companion`; edit `ExecStart` if it is elsewhere.
+The service assumes the repo is at `~/agent-companion`; edit `ExecStart` if it is elsewhere.

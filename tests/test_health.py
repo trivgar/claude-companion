@@ -3,7 +3,7 @@ import stat
 from pathlib import Path
 from types import SimpleNamespace
 
-from claude_companion import health
+from agent_companion import health
 
 
 def _write(path: Path, text: str):
@@ -112,7 +112,7 @@ def _hot_snapshot():
 
 
 def test_push_watcher_sends_on_crossings_and_rate_limits_each_reading(tmp_path, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_HEALTH_PUSH", "true")
+    monkeypatch.setenv("AGENT_COMPANION_HEALTH_PUSH", "true")
     sent = []
     reader = type("Reader", (), {"snapshot": lambda self: _hot_snapshot()})()
     watcher = health.Watcher(reader, lambda *args: sent.append(args) or True, tmp_path / "health-alerts.json")
@@ -132,7 +132,7 @@ def test_push_watcher_sends_on_crossings_and_rate_limits_each_reading(tmp_path, 
 
 
 def test_watcher_never_starts_during_pytest(tmp_path, monkeypatch):
-    monkeypatch.setenv("CLAUDE_COMPANION_HEALTH_PUSH", "true")
+    monkeypatch.setenv("AGENT_COMPANION_HEALTH_PUSH", "true")
     watcher = health.Watcher(type("Reader", (), {"snapshot": lambda self: {}})(), lambda *args: True, tmp_path / "state")
     watcher.start()
     assert watcher.thread is None
@@ -142,8 +142,8 @@ def test_health_route_declares_the_owner_read_guard():
     import pytest
 
     pytest.importorskip("fastapi")
-    from claude_companion.server import auth
-    from claude_companion.server import health as health_route
+    from agent_companion.server import auth
+    from agent_companion.server import health as health_route
 
     route = next(route for route in health_route.router.routes if route.path == "/api/health")
     assert auth.require_token in {dependency.call for dependency in route.dependant.dependencies}
