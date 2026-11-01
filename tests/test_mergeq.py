@@ -62,6 +62,13 @@ if a[:2] == ["pr", "view"]:
     print(json.dumps({"headRefName": p["branch"], "headRefOid": head_oid(p["branch"]),
                       "isCrossRepository": p.get("isCrossRepository", False), "state": state,
                       "title": p.get("title", "queued change")}))
+if a[:2] == ["pr", "checks"]:
+    if os.environ.get("FAKE_CHECKS_FAIL") == a[2]:
+        print("pytest (3.11)\\tfail\\t1m\\thttps://example.com")
+        sys.exit(1)
+    if os.environ.get("FAKE_NO_REQUIRED"):
+        sys.stderr.write("no required checks reported on the 'x' branch\\n")
+        sys.exit(1)
 if a[:2] == ["pr", "merge"]:
     br = info(a[2])["branch"]
     if "--match-head-commit" in a and opt("--match-head-commit") != head_oid(br):
@@ -435,3 +442,30 @@ def test_failure_stops_the_run_and_later_branches_stay_queued(world, monkeypatch
     assert states == {"feat/a": "merged", "feat/b": "push-failed"}
     assert world.store.last()["waiting"] == ["feat/c"]
     assert any("feat/b" in m and "stay queued" in m for m in world.said)
+
+
+def test_the_merge_waits_for_the_required_checks(world):
+    # main may require CI (agent-companion does since 2026-11-01); a PR the queue
+    # opened a moment ago has it still running, so the queue waits for it first.
+    world.queue("feat/a", {"a.txt": "a\n"})
+    assert world.go() == 0
+    log = [c[:2] for c in world.calls("pr")]
+    assert log.index(["pr", "checks"]) < log.index(["pr", "merge"])
+    assert "--required" in world.calls("pr", "checks")[0] and "--watch" in world.calls("pr", "checks")[0]
+
+
+def test_red_required_checks_merge_nothing(world, monkeypatch):
+    monkeypatch.setenv("FAKE_CHECKS_FAIL", "1")
+    world.queue("feat/a", {"a.txt": "a\n"})
+    world.go()
+    assert not world.origin_has("a.txt") and world.calls("pr", "merge") == []
+    o = world.store.last()["outcomes"][0]
+    assert o["state"] != "merged" and "required checks did not pass" in o["detail"]
+
+
+def test_a_branch_that_requires_no_checks_still_merges(world, monkeypatch):
+    from agent_companion import mergeq
+    monkeypatch.setattr(mergeq, "NO_CHECKS_GRACE_S", 0)
+    monkeypatch.setenv("FAKE_NO_REQUIRED", "1")
+    world.queue("feat/a", {"a.txt": "a\n"})
+    assert world.go() == 0 and world.origin_has("a.txt")

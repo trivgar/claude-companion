@@ -382,6 +382,33 @@ def _run_locked(store, repo, suite, gh, notify, say) -> int:
                   waiting=[w["branch"] for w in waiting])
 
 
+CHECKS_WAIT_S = 30 * 60
+NO_CHECKS_GRACE_S = 90     # a PR opened a moment ago may not have its checks registered yet
+
+
+def _await_checks(repo, gh, number) -> str:
+    """'' once the PR's required checks pass, or when the branch requires none.
+    main may require CI (trivgar/agent-companion does since 2026-11-01), and on a
+    PR opened a moment ago it has only just started, so GitHub refuses the merge."""
+    give_up = time.time() + NO_CHECKS_GRACE_S
+    while True:
+        try:
+            r = _run([gh, "pr", "checks", str(number), "--required", "--watch", "--interval", "20"],
+                     cwd=repo, timeout=CHECKS_WAIT_S)
+        except subprocess.TimeoutExpired:
+            return f"PR #{number}: required checks still running after {CHECKS_WAIT_S // 60} min; not merged"
+        if not r.returncode:
+            return ""
+        said = (r.stdout or "") + (r.stderr or "")
+        if "no required checks" not in said and "no checks reported" not in said:
+            return f"PR #{number}: required checks did not pass ({_last_line(said)}); not merged"
+        # None yet: either the branch requires none, or GitHub has not started
+        # them. Wait out the grace, then let the merge itself say which.
+        if time.time() >= give_up:
+            return ""
+        time.sleep(15)
+
+
 def _open_and_merge(repo, gh, e, passed) -> str:
     """Open the PR and merge it only at the tested sha. '' on success, else the problem."""
     b, sha = e["branch"], e["sha"]
@@ -407,6 +434,9 @@ def _open_and_merge(repo, gh, e, passed) -> str:
         return f"PR #{pr.get('number')} head is {str(pr.get('headRefOid'))[:12]}, not the tested {sha[:12]}; not merged"
     if pr.get("isCrossRepository"):
         return f"PR #{pr.get('number')} comes from another repository; not merged"
+    waited = _await_checks(repo, gh, pr["number"])
+    if waited:
+        return waited
     r = _run([gh, "pr", "merge", str(pr["number"]), "--merge", "--match-head-commit", sha],
              cwd=repo, timeout=120)
     if not r.returncode:
@@ -423,6 +453,9 @@ def _open_and_merge(repo, gh, e, passed) -> str:
 def _merge_queued_pr(repo, gh, e) -> str:
     """Merge an already-open same-repository PR at the sha the queue tested."""
     number, sha = e["pr"], e["sha"]
+    waited = _await_checks(repo, gh, number)
+    if waited:
+        return waited
     r = _run([gh, "pr", "merge", str(number), "--merge", "--match-head-commit", sha],
              cwd=repo, timeout=120)
     if not r.returncode:
