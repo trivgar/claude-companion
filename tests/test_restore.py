@@ -13,6 +13,7 @@ from claude_companion.liveness import proc_start  # noqa: E402
 from claude_companion import server  # noqa: E402
 from claude_companion.server import auth  # noqa: E402
 from claude_companion.server import restore as restore_routes  # noqa: E402
+from routes_walk import all_routes  # noqa: E402
 
 TOKEN = "t" * 32
 OWNER = "o" * 64
@@ -188,7 +189,7 @@ def test_restore_routes_use_the_owner_read_and_write_guards(monkeypatch):
     called = []
     monkeypatch.setattr(restore_routes.core, "restore", lambda: called.append(True) or {"ok": True, "sessions": []})
     app = server.create_app(token=TOKEN, owner_key=OWNER)
-    routes = [route for route in app.routes if isinstance(route, APIRoute) and route.path == "/api/restore"]
+    routes = [route for route in all_routes(app) if isinstance(route, APIRoute) and route.path == "/api/restore"]
     read = next(route for route in routes if "GET" in route.methods)
     write = next(route for route in routes if "POST" in route.methods)
     assert read.dependant.dependencies[0].call is auth.require_token

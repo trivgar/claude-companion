@@ -6,6 +6,7 @@ pytest.importorskip("fastapi")
 
 from claude_companion import restart, server  # noqa: E402
 from claude_companion.server import auth  # noqa: E402
+from routes_walk import all_routes  # noqa: E402
 
 
 class Result:
@@ -54,7 +55,7 @@ def test_the_dashboard_reports_restart_state_and_documented_command(monkeypatch)
     monkeypatch.setattr(server.restart, "Check", Changed)
     monkeypatch.setattr(server, "FEATURES", [])
     app = server.create_app(token="t" * 32, owner_key="o" * 64)
-    route = next(route for route in app.routes if route.path == "/api/needs-restart")
+    route = next(route for route in all_routes(app) if getattr(route, "path", "") == "/api/needs-restart")
     assert route.dependant.dependencies[0].call is auth.require_token
     assert route.endpoint() == {
         "needed": True, "command": restart.RESTART_COMMAND}
