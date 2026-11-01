@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import config
+from . import projects as _projects
 
 MAX_PROJECTS = 40
 MAX_NAME = 80
@@ -47,24 +48,19 @@ class LaunchResult:
 
 
 def settings(value=None) -> Settings:
-    """Read the small ``[new_session]`` table, ignoring malformed rows."""
+    """The shared ``[projects]`` list plus ``[new_session].default_model``.
+
+    ``value`` stands in for the ``[new_session]`` table alone (tests)."""
     table = config.get("new_session", {}) if value is None else value
     if not isinstance(table, dict):
-        return Settings((), "")
+        table = {}
     model = table.get("default_model")
     default_model = model.strip()[:120] if isinstance(model, str) else ""
-    rows = table.get("projects")
-    if not isinstance(rows, (list, tuple)):
-        return Settings((), default_model)
+    rows = _projects.configured() if value is None else _projects.pairs(table.get("projects"))
     projects = []
     names = set()
-    for row in rows[:MAX_PROJECTS]:
-        if not isinstance(row, dict):
-            continue
-        name, raw_path = row.get("name"), row.get("path")
-        if not isinstance(name, str) or not isinstance(raw_path, str):
-            continue
-        name = " ".join(name.split())[:MAX_NAME]
+    for name, raw_path in rows[:MAX_PROJECTS]:
+        name = name[:MAX_NAME]
         if not name or not raw_path.strip() or name.casefold() in names:
             continue
         try:
@@ -210,4 +206,5 @@ def launch(project: Project, model: str = "", prompt: str = "", *, run=None, whi
         if monotonic() >= deadline:
             break
         sleep(min(VERIFY_EVERY_SECONDS, max(0.0, deadline - monotonic())))
-    return LaunchResult(False, "Claude did not start in the new tmux pane")
+    # The session is left running: whatever it shows is the best clue.
+    return LaunchResult(False, f"Claude did not start in tmux session {session} (left open to look at)", session)

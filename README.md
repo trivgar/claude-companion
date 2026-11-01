@@ -57,7 +57,7 @@ real limits.
 minutes. After a reboot or crash, the Sessions tab lists missing sessions and
 can resume them in their old tmux names and folders.
 
-**New session.** Start Claude in a configured `[new_session]` folder with an optional first prompt; the page never accepts a path, and unavailable folders stay disabled.
+**New session.** Start Claude in a folder listed in `[projects]` with an optional first prompt; the page never accepts a path, and unavailable folders stay disabled.
 
 **Files.** Browse configured project trees, open bounded text files and save an
 edit. Files git ignores, binary files and files over 1 MB stay out of the
@@ -361,7 +361,8 @@ hooks run outside any server's process.
 | `restore_snapshot_interval_min` | Snapshot timer cadence in minutes, 1 through 60; default 5 |
 | `systemd_user_dir` | Where the restore timer installer writes user units; default `~/.config/systemd/user` |
 | `restore_python` | Python executable the restore timer runs; default is the Python that installed it |
-| `[projects]` | Project-name-to-root table for the Files tab. Only these roots can be browsed or edited. |
+| `[projects]` | Project name to folder. The Files tab browses and edits only these; New session starts Claude only in these. |
+| `[new_session]` | `default_model` for New session (an older `projects` list here is still read) |
 
 ### Helpers and background jobs
 
