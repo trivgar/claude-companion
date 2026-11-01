@@ -53,6 +53,8 @@ jobs show their command and age, and stale orphan snapshot shells are reaped
 after a configurable delay. At the top, your 5-hour and 7-day spend, real
 Claude limits, and, when local Codex rollout logs exist, Codex plan limits.
 
+**Scoreboard.** For commits the installed hook recorded in configured projects, shows each session's added lines, lines later reworked inside a configurable window, and optional good or bad owner marks. The marks are counts only and never alter rework.
+
 **Restore.** A small local snapshot records each tmux-backed session every few
 minutes. After a reboot or crash, the Sessions tab lists missing sessions and
 can resume them in their old tmux names and folders.
@@ -167,6 +169,9 @@ corresponding feature is used:
 - The Files tab writes only a text file below a root you put in `[projects]`.
   It writes beside the file and renames it, then commits only that file when it
   was clean before the save. It never pushes.
+- The Scoreboard writes `scoreboard-cache.json` and `scoreboard-marks.json` in
+  the app data directory. They hold local line-count cache entries and the
+  owner’s good or bad commit marks.
 - `python -m claude_companion.server.install_hooks` adds its hooks to
   `~/.claude/settings.json` and first writes a timestamped
   `~/.claude/settings.json.bak-...` backup: the asks hooks, SessionStart and
@@ -363,6 +368,7 @@ hooks run outside any server's process.
 | `job_reaper_after_min` | Age before an orphaned background snapshot shell is terminated; default 60 |
 | `job_reaper_every_min` | Reaper interval in minutes; default 10, and 0 turns it off |
 | `data_dir` | Directory for app state, including restore snapshots; default `~/.local/share/claude-companion` |
+| `score_window_days` | Days after a recorded commit in which replacing one of its added lines counts as rework; default 7 |
 | `restore_snapshot_interval_min` | Snapshot timer cadence in minutes, 1 through 60; default 5 |
 | `systemd_user_dir` | Where the restore timer installer writes user units; default `~/.config/systemd/user` |
 | `restore_python` | Python executable the restore timer runs; default is the Python that installed it |
