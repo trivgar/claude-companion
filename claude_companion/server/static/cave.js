@@ -3,6 +3,7 @@
 'use strict';
 (function () {
   const esc = CC.esc;
+  const identityArt = window.CCIdentity;
   let el = null, who = '', agents = [], files = [];
   const PICKER_ARM_MS = 4000;
   let armedPicker = null;
@@ -39,6 +40,7 @@
 
   const css = document.createElement('style');
   css.textContent = `
+    #chat-title { margin:0 0 8px; } #chat-title h2 { align-items:center; display:flex; font-size:1rem; gap:8px; margin:0; min-width:0; overflow-wrap:anywhere; }
     #chat-log { display:flex; flex-direction:column; gap:8px; margin:0 0 12px; }
     .msg { max-width:92%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);
       background:var(--raised); white-space:pre-wrap; overflow-wrap:anywhere; }
@@ -67,6 +69,7 @@
 
   function shell() {
     el.innerHTML = `
+      <div id="chat-title" hidden></div>
       <div id="chat-bar"><label class="dim" for="chat-to">Talk to</label><select id="chat-to"></select>
       <button type="button" class="act" id="chat-stop">Stop it</button>
       <button type="button" class="act" id="chat-resume" hidden>Resume</button>
@@ -109,6 +112,15 @@
 
   function selectedAgent() {
     return agents.find(agent => agent.name === who) || null;
+  }
+
+  function drawTitle() {
+    const title = el.querySelector('#chat-title');
+    const target = selectedAgent();
+    if (!target) { title.hidden = true; title.textContent = ''; return; }
+    const name = target.name || target.project || 'session';
+    title.hidden = false;
+    title.innerHTML = `<h2 class="identity-heading">${identityArt.sprite(name)}<span>Chat with ${esc(name)}</span></h2>`;
   }
 
   function identity(action) {
@@ -238,6 +250,7 @@
     const select = el.querySelector('#chat-to');
     if (document.activeElement !== select) select.innerHTML = `<option value="">${names.length ? 'pick a session' : 'no session reachable'}</option>` +
       agents.map(a => `<option value="${esc(a.name)}"${a.name === who ? ' selected' : ''}>${esc(a.name)}${a.waiting ? ' (waiting)' : ''}${a.project ? ' · ' + esc(a.project) : ''}</option>`).join('');
+    drawTitle();
     setActionVisibility();
     const log = el.querySelector('#chat-log');
     let messages = data.messages || [];

@@ -50,7 +50,8 @@ context is, the git branch, and its last reply. A session that is waiting on
 you says so. Set a context line to flag a top-level session that needs
 `/clear` and receive one push notification on each crossing. Background Bash
 jobs show their command and age, and stale orphan snapshot shells are reaped
-after a configurable delay. At the top, your 5-hour and 7-day spend, real
+after a configurable delay. Each card has a deterministic procedural pixel
+sprite based on its display name. At the top, your 5-hour and 7-day spend, real
 Claude limits, and, when local Codex rollout logs exist, Codex plan limits.
 
 **Scoreboard.** For commits the installed hook recorded in configured projects, shows each session's added lines, lines later reworked inside a configurable window, and optional good or bad owner marks. The marks are counts only and never alter rework.
@@ -359,6 +360,7 @@ hooks run outside any server's process.
 | Key | What it does |
 |---|---|
 | `name` | What spoken lines call you. Blank leaves the address out. |
+| `sprite_overrides` | A table mapping a session display name to `#rrggbb`, to pin that session's sprite hue. |
 | `url` | The address a push opens. Web Push needs https, e.g. a `tailscale serve` URL. Default `http://127.0.0.1:8770` |
 | `contact` | `mailto:` address push services can reach you at |
 | `icons` | A module with `icon_data(tag, title)` and `icon_for(tag, title)` for each push's picture (optional) |

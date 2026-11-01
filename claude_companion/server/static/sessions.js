@@ -2,6 +2,7 @@
 'use strict';
 (function () {
   const esc = CC.esc;
+  const identity = window.CCIdentity;
   const css = document.createElement('style');
   css.textContent = `
     .scard { border-left:4px solid hsl(var(--h,0) var(--sc-pct,40%) 50%); overflow-wrap:anywhere; }
@@ -34,7 +35,6 @@
     .bar.hot i { background:var(--alert); }`;
   document.head.appendChild(css);
 
-  const hue = s => { let h = 0; for (const ch of String(s || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h % 360; };
   const ago = s => s == null ? '' : s < 60 ? `${Math.round(s)}s ago` : s < 3600 ? `${Math.round(s / 60)}m ago` : `${Math.round(s / 3600)}h ago`;
   const money = n => '$' + Number(n || 0).toFixed(2);
   const short = m => String(m || '').replace(/^claude-/, '').replace(/-(\d)-(\d)$/, ' $1.$2');
@@ -120,8 +120,8 @@
   function card(r) {
     const name = r.speaker || r.name || r.project || 'session';
     const pct = Math.max(0, Math.min(100, Number(r.context_pct) || 0));
-    return `<article class="card scard${r.waiting ? ' waiting' : ''}" data-pid="${esc(r.pid)}" data-card-key="${esc(cardKey(r))}" style="--h:${hue(name)}">
-      <div class="top"><span class="dot ${esc(r.status)}"></span><h3>${esc(name)}</h3>
+    return `<article class="card scard${r.waiting ? ' waiting' : ''}" data-pid="${esc(r.pid)}" data-card-key="${esc(cardKey(r))}" style="--h:${identity.hue(name)}">
+      <div class="top"><span class="dot ${esc(r.status)}"></span>${identity.sprite(name)}<h3>${esc(name)}</h3>
         ${r.waiting ? '<span class="wbadge">waiting</span>' : ''}${isUnread(r) ? '<span class="newbadge">new</span>' : ''}${r.needs_clear ? '<span class="clearbadge">needs /clear</span>' : ''}${r.child ? '<span class="faint">spawned</span>' : ''}</div>
       <div class="meta"><span>${esc(r.project)}</span>${r.branch ? `<span>${esc(r.branch)}</span>` : ''}
         <span>${esc(short(r.model))}</span><span>${esc(money(r.cost_usd))}</span><span>${esc(Math.round(pct))}% context</span>
