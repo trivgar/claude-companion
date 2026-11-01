@@ -75,12 +75,13 @@ app_name = "Companion"
 # [approval_lines]
 # Alex = ["{you}, need your OK"]
 
-# Projects the Files tab may browse and edit. Each value is a project root.
+# The project folders the dashboard may act in: the Files tab browses and
+# edits only these, and New session starts Claude only in these.
 # [projects]
-# example = "/path/to/project"
+# api = "~/work/api"
+# site = "~/work/site"
 
-# The Sessions tab can start only these configured folders.  Each new Claude
-# runs in its own detached tmux session, in a user systemd scope when available.
+# New session: the model a new Claude starts with (leave out for the default).
+# (An older [new_session] projects = [...] list is still read.)
 # [new_session]
 # default_model = "sonnet"
-# projects = [{ name = "api", path = "~/work/api" }, { name = "site", path = "~/work/site" }]

@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from .. import config, safe_paths
+from .. import projects as configured_projects
 from . import auth
 
 TITLE = "Files"
@@ -39,18 +40,9 @@ class Snapshot:
 def projects() -> list[dict[str, str]]:
     """Configured, existing project roots, without exposing arbitrary paths.
 
-    The documented form is a TOML ``[projects]`` table.  Accepting a list of
-    ``{name, path}`` entries as well keeps programmatic configuration equally
-    clear while retaining a harmless empty default.
+    The list is the shared ``[projects]`` table (claude_companion.projects).
     """
-    raw = config.get("projects", {})
-    items: list[tuple[object, object]]
-    if isinstance(raw, dict):
-        items = list(raw.items())
-    elif isinstance(raw, list):
-        items = [(item.get("name"), item.get("path")) for item in raw if isinstance(item, dict)]
-    else:
-        items = []
+    items = configured_projects.configured()
     out = []
     for name, value in items:
         name = str(name or "").strip()
