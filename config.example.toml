@@ -19,6 +19,10 @@ app_name = "Companion"
 # codex_home = "~/.codex"      # optional: show Codex plan limits from local rollout logs
 # data_dir = "~/.local/share/claude-companion"
 
+# Scoreboard: days in which a later commit can count as rework. It reads only
+# projects listed below and keeps its cache and owner marks in data_dir.
+# score_window_days = 7
+
 # Shared deferred work and cross-project handoffs.  The default file is
 # deferred.md in data_dir.  Entries added from the dashboard use this label.
 # deferred_file = "~/.local/share/claude-companion/deferred.md"
