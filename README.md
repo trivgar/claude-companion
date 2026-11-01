@@ -171,7 +171,7 @@ corresponding feature is used:
   was clean before the save. It never pushes.
 - The Scoreboard writes `scoreboard-cache.json` and `scoreboard-marks.json` in
   the app data directory. They hold local line-count cache entries and the
-  owner’s good or bad commit marks.
+  owner's good or bad commit marks.
 - `python -m claude_companion.server.install_hooks` adds its hooks to
   `~/.claude/settings.json` and first writes a timestamped
   `~/.claude/settings.json.bak-...` backup: the asks hooks, SessionStart and
