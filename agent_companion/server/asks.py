@@ -38,7 +38,7 @@ DECISIONS = ("allow", "deny")
 
 
 def store() -> Path:
-    raw = (os.environ.get("AGENT_COMPANION_ASKS") or config.get("asks_dir")
+    raw = (config.env("ASKS") or config.get("asks_dir")
            or Path.home() / ".local" / "share" / "agent-companion" / "asks")
     return Path(str(raw)).expanduser()
 

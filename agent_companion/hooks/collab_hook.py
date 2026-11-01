@@ -9,6 +9,15 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+
+def _env(key, default=None):
+    """AGENT_COMPANION_<KEY>, or its name before the 2026-11-01 rename. This
+    file runs as a bare script, so it cannot import the package's config."""
+    value = os.environ.get("AGENT_COMPANION_" + key)
+    if value is None:
+        value = os.environ.get("CLAUDE_COMPANION_" + key)
+    return default if value is None else value
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
@@ -25,7 +34,7 @@ def _ago(iso: str) -> str:
 
 
 def main() -> int:
-    if os.environ.get("AGENT_COMPANION_JOB") or os.environ.get("COMMS_JOB"):
+    if _env("JOB") or os.environ.get("COMMS_JOB"):
         return 0
     try:
         sys.stdin.read()

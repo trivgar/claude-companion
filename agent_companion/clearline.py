@@ -15,7 +15,7 @@ LOW, HIGH = 50_000, 2_000_000
 
 
 def _path() -> Path:
-    override = os.environ.get("AGENT_COMPANION_CLEARLINE")
+    override = config.env("CLEARLINE")
     if override:
         return Path(override)
     from .server import sessions
@@ -58,7 +58,7 @@ def over(row: dict, line: int) -> bool:
 
 
 def over_file() -> Path:
-    override = os.environ.get("AGENT_COMPANION_CLEAR_OVER")
+    override = config.env("CLEAR_OVER")
     if override:
         return Path(override)
     from .server import sessions

@@ -53,7 +53,7 @@ AUDIO = {".wav": "audio/wav", ".mp3": "audio/mpeg", ".ogg": "audio/ogg", ".flac"
 
 
 def voices_dir() -> Path:
-    raw = os.environ.get("AGENT_COMPANION_VOICES_DIR") or config.get("voices_dir")
+    raw = config.env("VOICES_DIR") or config.get("voices_dir")
     return Path(str(raw)).expanduser() if raw else Path.home() / ".local/share/agent-companion/voices"
 
 

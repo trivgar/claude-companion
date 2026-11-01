@@ -25,7 +25,7 @@ EDIT_MAX = 40000
 
 
 def queue_dir() -> Path:
-    raw = os.environ.get("AGENT_COMPANION_MAIL_DIR") or config.get("mail_queue_dir")
+    raw = config.env("MAIL_DIR") or config.get("mail_queue_dir")
     if raw:
         return Path(str(raw)).expanduser()
     base = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")

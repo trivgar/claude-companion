@@ -8,12 +8,13 @@ from pathlib import Path
 
 from . import claude
 from .gmail import drafter_allowed_tools
+from .. import config
 
 PROMPT = Path(__file__).with_name("prompts") / "voice_guide.md"
 
 
 def path() -> Path:
-    env = os.environ.get("AGENT_COMPANION_VOICE_GUIDE")
+    env = config.env("VOICE_GUIDE")
     if env:
         return Path(env)
     base = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")

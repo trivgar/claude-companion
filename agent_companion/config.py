@@ -8,15 +8,24 @@ import tomllib
 from pathlib import Path
 
 
+def env(key: str, default=None):
+    """AGENT_COMPANION_<KEY>, or the name it had before the 2026-11-01 rename,
+    CLAUDE_COMPANION_<KEY>, read at call time so a later set still counts."""
+    key = key.upper()
+    value = os.environ.get("AGENT_COMPANION_" + key)
+    if value is None:
+        value = os.environ.get("CLAUDE_COMPANION_" + key)
+    return default if value is None else value
+
+
 def path() -> Path:
-    return Path(os.environ.get("AGENT_COMPANION_CONFIG",
-                               Path.home() / ".config" / "agent-companion" / "config.toml"))
+    return Path(env("CONFIG") or Path.home() / ".config" / "agent-companion" / "config.toml")
 
 
 def get(key: str, default=None):
-    env = os.environ.get("AGENT_COMPANION_" + key.upper())
-    if env is not None:
-        return env
+    env_value = env(key)
+    if env_value is not None:
+        return env_value
     try:
         return tomllib.loads(path().read_text()).get(key, default)
     except (OSError, ValueError):

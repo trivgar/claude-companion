@@ -18,7 +18,7 @@ def test_the_old_import_name_is_the_same_module():
 
 
 def test_an_old_env_name_still_counts_and_the_new_one_wins():
-    code = "import agent_companion, os; print(os.environ['AGENT_COMPANION_JOB'])"
+    code = "from agent_companion import config; print(config.env('JOB'))"
     assert _py(code, CLAUDE_COMPANION_JOB="station") == "station"
     assert _py(code, CLAUDE_COMPANION_JOB="old", AGENT_COMPANION_JOB="new") == "new"
 
@@ -30,3 +30,11 @@ def test_a_phone_built_before_the_rename_still_sends_a_heard_key():
     new = SimpleNamespace(headers={"x-agent-companion-key": "k2", "x-agent-companion-token": "t2"})
     assert (auth._owner_presented(old), auth._hook_presented(old)) == ("k1", "t1")
     assert (auth._owner_presented(new), auth._hook_presented(new)) == ("k2", "t2")
+
+
+def test_an_old_env_name_set_after_import_still_counts(monkeypatch):
+    from agent_companion import config, reader
+    monkeypatch.delenv("AGENT_COMPANION_MAIL_DIR", raising=False)
+    monkeypatch.setenv("CLAUDE_COMPANION_MAIL_DIR", "/x")
+    assert config.env("MAIL_DIR") == "/x"
+    assert reader.job_of({"CLAUDE_COMPANION_JOB": "station", "CLAUDE_COMPANION_ABOUT": "HK"}) == ("station", "HK")

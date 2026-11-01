@@ -28,6 +28,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from . import config
 
 SUITE = "python3 -m pytest -q -x"
 UNIT = "agent-companion"
@@ -36,7 +37,7 @@ QUEUED, MERGED, CONFLICT, FAILED, PUSH_FAILED = "queued", "merged", "conflict", 
 
 
 def state_dir() -> Path:
-    return Path(os.environ.get("AGENT_COMPANION_MERGEQ_DIR")
+    return Path(config.env("MERGEQ_DIR")
                 or Path.home() / ".local" / "share" / "agent-companion" / "mergeq")
 
 
@@ -63,7 +64,7 @@ def git(cwd, *args, check=True) -> str:
 
 def main_checkout(start: Path | None = None) -> Path:
     """The primary checkout: the first entry of `git worktree list`."""
-    start = Path(start or os.environ.get("AGENT_COMPANION_MERGEQ_REPO") or ".")
+    start = Path(start or config.env("MERGEQ_REPO") or ".")
     out = git(start, "worktree", "list", "--porcelain")
     for line in out.splitlines():
         if line.startswith("worktree "):

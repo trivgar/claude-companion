@@ -28,7 +28,16 @@ import time
 import urllib.request
 from pathlib import Path
 
-WAIT_S = float(os.environ.get("AGENT_COMPANION_ASK_WAIT_S", str(24 * 3600 - 300)))  # under the hook's timeout
+
+def _env(key, default=None):
+    """AGENT_COMPANION_<KEY>, or its name before the 2026-11-01 rename. This
+    file runs as a bare script, so it cannot import the package's config."""
+    value = os.environ.get("AGENT_COMPANION_" + key)
+    if value is None:
+        value = os.environ.get("CLAUDE_COMPANION_" + key)
+    return default if value is None else value
+
+WAIT_S = float(_env("ASK_WAIT_S", str(24 * 3600 - 300)))  # under the hook's timeout
 QUIET_S = 120                  # dashboard silent this long: the session's own dialog after all
 MARK_S = 60                    # how often the session is marked waiting again
 POST_S = 25                    # past the push the dashboard sends before it answers
@@ -283,7 +292,7 @@ def permission(ev: dict, t0: float) -> int:
 
 
 def main() -> int:
-    if os.environ.get("AGENT_COMPANION_JOB") or os.environ.get("COMMS_JOB"):
+    if _env("JOB") or os.environ.get("COMMS_JOB"):
         return 0                                    # a headless job (mail, comms): nobody to ask
     t0 = time.time()                                # the prompt is showing by now
     try:

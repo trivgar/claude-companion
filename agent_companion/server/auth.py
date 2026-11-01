@@ -79,12 +79,12 @@ def token_path() -> Path:
 
 
 def owner_keys_path() -> Path:
-    return Path(str(os.environ.get("AGENT_COMPANION_OWNER_KEYS") or config.get("owner_keys_file")
+    return Path(str(config.env("OWNER_KEYS") or config.get("owner_keys_file")
                     or _config_dir() / OWNER_KEYS_FILENAME)).expanduser()
 
 
 def pairing_path() -> Path:
-    return Path(str(os.environ.get("AGENT_COMPANION_PAIRING") or config.get("pairing_file")
+    return Path(str(config.env("PAIRING") or config.get("pairing_file")
                     or _config_dir() / PAIRING_FILENAME)).expanduser()
 
 

@@ -73,7 +73,7 @@ def claude_home() -> Path:
 
 
 def log_path() -> Path:
-    return Path(os.environ.get("AGENT_COMPANION_CHAT_LOG")
+    return Path(config.env("CHAT_LOG")
                 or Path.home() / ".local" / "share" / "agent-companion" / "chat.jsonl")
 
 
