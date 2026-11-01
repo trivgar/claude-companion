@@ -6,7 +6,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
+import android.webkit.WebView;
+
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.WebViewListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 // CompanionApp's pages, loaded live from the tailnet (capacitor.config.json
@@ -40,6 +43,22 @@ public class MainActivity extends BridgeActivity {
             Ringer.register(this);
             getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
             live = new java.lang.ref.WeakReference<>(this);
+            // Each page load copies the paired owner key for the native calls
+            // (CompanionApp.ownerKey). A key that is new, as after pairing,
+            // registers for comms again: the start-up try went without one.
+            getBridge().addWebViewListener(new WebViewListener() {
+                @Override
+                public void onPageLoaded(WebView v) {
+                    v.evaluateJavascript("(function(){try{return localStorage.getItem('cc-owner-key')||''}catch(e){return ''}})()",
+                            json -> {
+                                String k = json == null ? "" : json.replaceAll("^\"|\"$", "");
+                                if (CompanionApp.setOwnerKey(MainActivity.this, k)) {
+                                    FirebaseMessaging.getInstance().getToken()
+                                            .addOnSuccessListener(t -> CompanionApp.register(MainActivity.this, t));
+                                }
+                            });
+                }
+            });
         }
         openFrom(getIntent());
     }

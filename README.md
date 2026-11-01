@@ -251,9 +251,16 @@ Version 0.1. Tested: the library, the server routes and the pages at phone
 width, the mail drafter against a fake source, the comms scripts against a
 fake Piper, and the leak scan (`python3 -m pytest -q`).
 
-Not yet run on a real install: Gmail drafting live, Tailscale to a real phone,
-voice training on a fresh machine, and the Outlook plug-in (a guide, no code
-yet). Expect rough edges there, and tell your Claude when you hit one.
+Run end to end on a fresh install (2026-11-01): a clone of this repo,
+`INSTALL.md`, pairing, every tab at phone width, and a real Claude Code
+session through the hooks (a permission ask allowed from the Asks tab, chat,
+a commit reaching the scoreboard).
+
+Not yet run on a real install: Gmail drafting live, the Restore button,
+Tailscale to a real phone, the Android app's background features (push comms,
+background playback, update checks), voice training on a fresh machine, and
+the Outlook plug-in (a guide, no code yet). Expect rough edges there, and tell
+your Claude when you hit one.
 
 Roadmap: more connectors as plug-ins, and macOS.
 
