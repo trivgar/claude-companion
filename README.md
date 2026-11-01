@@ -446,10 +446,13 @@ in `~/.claude/settings.json`.
 
 ```bash
 python3 -m pip install -e '.[app,push,test]'
-python3 -m pytest -q
+python3 -m playwright install chromium
+python3 -m pytest -q -rs
 ```
 
-Every test builds its own temporary `~/.claude`; none reads yours.
+Every test builds its own temporary `~/.claude`; none reads yours. Without
+the `playwright install` step the page tests skip rather than fail; `-rs`
+lists every skip, so a short run says why.
 
 ## License
 

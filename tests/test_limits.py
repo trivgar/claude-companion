@@ -88,11 +88,11 @@ def test_serves_cache_when_the_fetch_fails(monkeypatch, tmp_path):
     c = limits.LimitsCache(home, cache)
     assert c.get(force=True)["five_hour"]["utilization"] == 7
 
-    monkeypatch.setattr(limits, "fetch", lambda t, url=limits.USAGE_URL: (None, "HTTP 429"))
+    monkeypatch.setattr(limits, "fetch", lambda t, url=limits.USAGE_URL: (None, "rate-limited by Anthropic, will retry"))
     again = c.get(force=True)
     assert again["available"] is True
     assert again["five_hour"]["utilization"] == 7
-    assert again["last_error"] == "HTTP 429"
+    assert again["last_error"] == "rate-limited by Anthropic, will retry"
 
 
 def test_does_not_refetch_inside_the_interval(monkeypatch, tmp_path):
@@ -152,7 +152,7 @@ def test_a_failed_fetch_waits_the_interval_too(monkeypatch, tmp_path):
     home = _creds(tmp_path)
     calls = []
     monkeypatch.setattr(limits, "fetch",
-                        lambda t, url=limits.USAGE_URL: (calls.append(1) or (None, "HTTP 429")))
+                        lambda t, url=limits.USAGE_URL: (calls.append(1) or (None, "rate-limited by Anthropic, will retry")))
     c = limits.LimitsCache(home, tmp_path / "cache.json")
     now = time.time()
     for i in range(20):

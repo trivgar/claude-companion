@@ -57,6 +57,7 @@ pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
 from claude_companion import server  # noqa: E402
+from routes_walk import all_routes  # noqa: E402
 
 TOKEN, OWNER = "t" * 32, "o" * 64
 KEY = {"x-claude-companion-key": OWNER}
@@ -81,7 +82,7 @@ def test_routes_need_the_owner_key(c, monkeypatch):
 def test_nothing_writes(c):
     for p in PATHS:
         assert c.post(f"/api/money/{p}", json={}, headers=KEY).status_code in (404, 405)
-    assert all(r.methods <= {"GET", "HEAD"} for r in c.app.routes if getattr(r, "path", "").startswith("/api/money"))
+    assert all(r.methods <= {"GET", "HEAD"} for r in all_routes(c.app) if getattr(r, "path", "").startswith("/api/money"))
 
 
 def test_unset_source_says_so(c):

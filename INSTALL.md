@@ -193,6 +193,12 @@ To remove only those hooks later:
 .venv/bin/python -m claude_companion.server.install_hooks --uninstall
 ```
 
+Claude Code now starts in auto mode by default, which settles most permission
+prompts itself, so only what auto mode will not decide reaches the Asks tab.
+For every prompt to come to the dashboard, start sessions with
+`--permission-mode manual` or set `"defaultMode": "manual"` under
+`permissions` in `~/.claude/settings.json`.
+
 Start a new Claude Code session after changing hooks. Phone chat needs sessions
 to run in tmux, so install it if you want that feature:
 

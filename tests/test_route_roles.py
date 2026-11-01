@@ -5,6 +5,7 @@ from fastapi.routing import APIRoute  # noqa: E402
 
 from claude_companion import server  # noqa: E402
 from claude_companion.server import auth  # noqa: E402
+from routes_walk import all_routes  # noqa: E402
 
 GUARDS = {auth.require_token, auth.require_write, auth.require_hook, auth.require_person, auth.require_person_write}
 OPEN = {"/", "/pair", "/api/pair", "/api/features", "/manifest.json"}
@@ -16,8 +17,11 @@ def _guards(route):
 
 def test_every_route_says_who_may_use_it():
     app = server.create_app(token="t" * 32)
-    bad = [r.path for r in app.routes if isinstance(r, APIRoute)
-           and r.path not in OPEN and not _guards(r)]
+    routes = [r for r in all_routes(app) if isinstance(r, APIRoute)]
+    # A walk that misses the included routers sees only a handful and would
+    # pass while checking nothing (it did, on a newer FastAPI, 2026-11-01).
+    assert len(routes) > 100, f"only {len(routes)} routes seen: the walk is broken"
+    bad = [r.path for r in routes if r.path not in OPEN and not _guards(r)]
     assert not bad, f"routes with no role: {bad}"
 
 
