@@ -57,16 +57,16 @@ def _sessions(p):
     if p.get("exists"):
         return _row("sessions", "Sessions", "ok", "Claude Code's session files are readable.")
     return _row("sessions", "Sessions", "broken", "The Claude Code folder was not found.",
-                "Run Claude Code once, or set claude_home in the config (INSTALL.md step 5).")
+                "Run Claude Code once, or set claude_home in the config (INSTALL.md step 2).")
 
 
 def _tailscale(p):
     if not p.get("installed"):
         return _row("tailscale", "Phone access", "off", "Tailscale is not installed on this computer.",
-                    "Install Tailscale and run `tailscale serve` for this port (INSTALL.md step 7).")
+                    "Install Tailscale and run `tailscale serve` for this port (INSTALL.md, Phone access with Tailscale).")
     if not p.get("serving"):
         return _row("tailscale", "Phone access", "off", "Tailscale is not serving this port.",
-                    "Run `tailscale serve` for this port so your phone can reach it (INSTALL.md step 7).")
+                    "Run `tailscale serve` for this port so your phone can reach it (INSTALL.md, Phone access with Tailscale).")
     return _row("tailscale", "Phone access", "ok", "Tailscale serves this port.")
 
 
@@ -74,10 +74,10 @@ def _push(p):
     n = int(p.get("devices") or 0)
     if not p.get("vapid"):
         return _row("push", "Push", "off", "No push key yet, so no device can subscribe.",
-                    "Open the Push tab on your phone and press Enable (INSTALL.md step 8).")
+                    "Open the Push tab on your phone and press Enable (INSTALL.md, Phone access with Tailscale).")
     if n == 0:
         return _row("push", "Push", "off", "Push is ready, but no device is subscribed.",
-                    "Open the Push tab on your phone and press Enable (INSTALL.md step 8).")
+                    "Open the Push tab on your phone and press Enable (INSTALL.md, Phone access with Tailscale).")
     return _row("push", "Push", "ok", f"{_plural(n, 'device')} subscribed.")
 
 
@@ -85,7 +85,7 @@ def _devices(p):
     n = int(p.get("count") or 0)
     if n == 0:
         return _row("devices", "Paired devices", "off", "No device is paired.",
-                    "Run `python -m claude_companion.server pair` and open the link on your phone (INSTALL.md step 5).")
+                    "Run `python -m claude_companion.server pair` and open the link on your phone (INSTALL.md step 4).")
     return _row("devices", "Paired devices", "ok", f"{_plural(n, 'device')} paired.")
 
 
@@ -96,7 +96,7 @@ def _mail(p):
                     "Add mail_accounts entries that choose a source in the config.")
     if not src:
         return _row("mail", "Mail drafts", "off", "No mail source is set.",
-                    "Choose a source for every mail_accounts entry and turn on the timer (INSTALL.md step 11).")
+                    "Choose a source for every mail_accounts entry and turn on the timer (INSTALL.md, Mail drafting).")
     if not p.get("known"):
         return _row("mail", "Mail drafts", "broken", f"The mail source {src} is not one this install knows.",
                     "Choose gmail or imap, or add the provider as docs/mail-outlook.md describes.")
@@ -104,7 +104,7 @@ def _mail(p):
     if run and not run.get("ok"):
         return _row("mail", "Mail drafts", "broken",
                     f"The last drafter run failed ({run.get('note') or 'no detail'}) at {run.get('at') or 'an unknown time'}.",
-                    "Check the mail log and that Claude Code can reach the mail connector (INSTALL.md step 11).")
+                    "Check the mail log and that Claude Code can reach the mail connector (INSTALL.md, Mail drafting).")
     when = f"last run {run['at']}" if run and run.get("at") else "no run recorded yet"
     return _row("mail", "Mail drafts", "ok", f"Source {src}, {when}.")
 
@@ -112,10 +112,10 @@ def _mail(p):
 def _comms(p):
     if not p.get("piper"):
         return _row("comms", "Spoken replies", "off", "The Piper voice program was not found.",
-                    "Run comms/install.sh to fetch Piper and the stock voices (INSTALL.md step 10).")
+                    "Run comms/install.sh to fetch Piper and the stock voices (INSTALL.md, Comms and Piper).")
     if not int(p.get("voices") or 0):
         return _row("comms", "Spoken replies", "off", "Piper is there, but no cast voice is installed.",
-                    "Run comms/install.sh to fetch the voices in comms/cast.tsv (INSTALL.md step 10).")
+                    "Run comms/install.sh to fetch the voices in comms/cast.tsv (INSTALL.md, Comms and Piper).")
     hold = " Comms are on hold." if p.get("held") else ""
     return _row("comms", "Spoken replies", "ok", f"Piper and {_plural(int(p['voices']), 'voice')} installed.{hold}")
 

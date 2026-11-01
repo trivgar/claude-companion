@@ -222,6 +222,8 @@ def main(argv: list[str] | None = None) -> int:
     app = create_app()
     logging.getLogger("uvicorn.access").addFilter(auth.RedactKey())
     paired = len(auth.devices())
+    if config.problem():
+        print(f"WARNING: {config.problem()}", file=sys.stderr)
     print(f"claude-companion on http://{bind}:{port}/ ({paired} device{'s' if paired != 1 else ''} paired; "
           "run `python -m claude_companion.server pair` to add one)", flush=True)
     uvicorn.run(app, host=bind, port=port, log_level="info")

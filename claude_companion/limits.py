@@ -96,7 +96,9 @@ def fetch(token: str, url: str = USAGE_URL) -> tuple[dict | None, str]:
             return parse(json.loads(r.read())), ""
     except urllib.error.HTTPError as exc:
         # 429 is expected under load; the caller serves its cache.
-        return None, f"HTTP {exc.code}"
+        return None, {429: "rate-limited by Anthropic, will retry",
+                      401: "Claude Code's sign-in has expired; run claude to sign in again",
+                      403: "the usage check was refused for this account"}.get(exc.code, f"HTTP {exc.code}")
     except (urllib.error.URLError, OSError, ValueError) as exc:
         return None, type(exc).__name__
 

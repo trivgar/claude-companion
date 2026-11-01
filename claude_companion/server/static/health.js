@@ -28,6 +28,8 @@
   const number = value => typeof value === 'number' && Number.isFinite(value);
   const pct = value => `${Math.round(value)}%`;
   const celsius = value => `${Math.round(value)}C`;
+  const bytes = value => value >= 1024 ** 4 ? `${(value / 1024 ** 4).toFixed(1)} TiB`
+    : value >= 1024 ** 3 ? `${Math.round(value / 1024 ** 3)} GiB` : `${Math.round(value / 1024 ** 2)} MiB`;
   const mib = value => value >= 1024 ? `${(value / 1024).toFixed(value >= 10240 ? 0 : 1)} GiB` : `${Math.round(value)} MiB`;
 
   function reading(label, row, value, warning) {
@@ -44,7 +46,7 @@
       (usable ? `<span class="machine-value">${esc(pct(row.percent))}</span>` :
         `<span class="machine-missing">${esc(row.reason || 'This disk reading is not available.')}</span>`) +
       (number(row.used_bytes) && number(row.total_bytes) ?
-        `<p class="machine-detail">${esc(mib(row.used_bytes))} used of ${esc(mib(row.total_bytes))}</p>` : '') +
+        `<p class="machine-detail">${esc(bytes(row.used_bytes))} used of ${esc(bytes(row.total_bytes))}</p>` : '') +
       `</article>`;
   }
 

@@ -66,7 +66,9 @@
     while (on) {
       if (mode === 'clips') { await clipsTurn(); continue; }
       try {
-        latest = await CC.get('/api/tts/outbox?who=web'); error = ''; mode = 'outbox';
+        latest = await CC.get('/api/tts/outbox?who=web'); error = '';
+        if (latest.set_up === false) { mode = 'clips'; continue; }
+        mode = 'outbox';
         const clips = latest.clips || [];
         CC.badge('comms', clips.length);
         draw();
@@ -161,9 +163,13 @@
   async function peek() {
     if (mode !== 'clips') {
       try {
-        latest = await CC.get('/api/tts/outbox?who=web'); error = ''; mode = 'outbox';
-        CC.badge('comms', (latest.clips || []).length);
-        return;
+        latest = await CC.get('/api/tts/outbox?who=web'); error = '';
+        if (latest.set_up !== false) {
+          mode = 'outbox';
+          CC.badge('comms', (latest.clips || []).length);
+          return;
+        }
+        mode = 'clips';
       } catch (caught) {
         if (!NOT_SET_UP.test(caught.message || '')) { latest = {held: false}; error = caught.message || 'Comms is not set up.'; return; }
         mode = 'clips';

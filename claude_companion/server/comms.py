@@ -274,6 +274,10 @@ def tts_phone() -> dict:
 # cannot supply same-origin headers. They still require the owner key.
 @router.get("/api/tts/outbox", dependencies=[Depends(auth.require_token)])
 def tts_outbox(after: int = 0, who: str = "phone") -> dict:
+    if who == "web" and not agentvibes.available(tts_dir()):
+        # The page asks this first on every load; a 200 keeps its console
+        # clean. Other players still get the 503 they expect.
+        return {"set_up": False, "clips": []}
     tts, root = _tts(), outbox_dir()
     who = who if who in ttsoutbox.PLAYERS else "phone"
     ttsoutbox.seen(root)

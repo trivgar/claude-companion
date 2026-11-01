@@ -23,6 +23,18 @@ def get(key: str, default=None):
         return default
 
 
+def problem() -> str:
+    """Why the config file cannot be used, or "" when it is fine or absent.
+    A broken file otherwise reads as every setting at its default, silently."""
+    try:
+        tomllib.loads(path().read_text())
+    except OSError:
+        return ""
+    except ValueError as exc:
+        return f"{path()} is not valid TOML ({exc}); every setting is at its default"
+    return ""
+
+
 def paths(key: str) -> tuple[Path, ...]:
     """A list in the file, or os.pathsep-separated in the environment."""
     v = get(key) or ()
