@@ -251,8 +251,8 @@
     const bits = [];
     if (Number.isFinite(cpu.percent)) bits.push(`CPU ${Math.round(cpu.percent)}%`);
     else if (cpu.reason) bits.push(`CPU: ${cpu.reason}`);
+    // A missing temperature is explained on the Machine tab, not on every strip.
     if (Number.isFinite(temp.c)) bits.push(`${Math.round(temp.c)}C`);
-    else if (temp.reason) bits.push(`CPU temperature: ${temp.reason}`);
     if (root && Number.isFinite(root.percent)) bits.push(`disk ${Math.round(root.percent)}%`);
     else if (root && root.reason) bits.push(`disk: ${root.reason}`);
     return bits.join(' · ');

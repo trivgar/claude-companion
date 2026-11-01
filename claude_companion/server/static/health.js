@@ -31,7 +31,7 @@
   const mib = value => value >= 1024 ? `${(value / 1024).toFixed(value >= 10240 ? 0 : 1)} GiB` : `${Math.round(value)} MiB`;
 
   function reading(label, row, value, warning) {
-    const usable = number(value);
+    const usable = value !== null && value !== undefined && value !== '';  // value arrives formatted, e.g. "34%"
     return `<article class="machine-reading${warning ? ' warn' : ''}"><span class="machine-label">${esc(label)}</span>` +
       (usable ? `<span class="machine-value">${esc(value)}</span>` :
         `<span class="machine-missing">${esc((row && row.reason) || 'This reading is not available.')}</span>`) +

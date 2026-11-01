@@ -147,3 +147,24 @@ def test_health_route_declares_the_owner_read_guard():
 
     route = next(route for route in health_route.router.routes if route.path == "/api/health")
     assert auth.require_token in {dependency.call for dependency in route.dependant.dependencies}
+
+
+def test_gpu_tools_are_found_outside_path_where_wsl_and_rocm_put_them(tmp_path):
+    seen = []
+
+    def which(name):
+        seen.append(name)
+        return name if name == "/usr/lib/wsl/lib/nvidia-smi" else None
+
+    reader = health.HealthReader(tmp_path / "proc", tmp_path / "sys", which=which)
+    assert reader._tool("nvidia-smi") == "/usr/lib/wsl/lib/nvidia-smi"
+    assert reader._tool("rocm-smi") is None
+    assert "/opt/rocm/bin/rocm-smi" in seen
+
+
+def test_a_failing_rocm_inside_wsl_says_why(tmp_path, monkeypatch):
+    reader = health.HealthReader(tmp_path / "proc", tmp_path / "sys",
+                                 which=lambda name: name if name.endswith("rocm-smi") else None)
+    monkeypatch.setattr(reader, "_rocm", lambda exe: {"reason": "AMD GPU query failed."})
+    monkeypatch.setattr(reader, "_inside_wsl", lambda: True)
+    assert "not visible inside WSL" in reader._gpu_read()["reason"]

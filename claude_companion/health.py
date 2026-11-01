@@ -278,14 +278,31 @@ class HealthReader:
                 gpus.append(item)
         return {"vendor": "AMD", "gpus": gpus} if gpus else {"reason": "AMD did not report usable GPU readings."}
 
+    # WSL puts nvidia-smi beside its GPU libraries, often not on PATH; ROCm
+    # installs under /opt/rocm. Both are looked for there too.
+    GPU_TOOL_DIRS = {"nvidia-smi": ("/usr/lib/wsl/lib",), "rocm-smi": ("/opt/rocm/bin",)}
+
+    def _tool(self, name: str) -> str | None:
+        found = self.which(name)
+        if found:
+            return found
+        for folder in self.GPU_TOOL_DIRS.get(name, ()):
+            candidate = Path(folder) / name
+            if self.which(str(candidate)):
+                return str(candidate)
+        return None
+
     def _gpu_read(self) -> dict:
-        nvidia = self.which("nvidia-smi")
+        nvidia = self._tool("nvidia-smi")
         if nvidia:
             return self._nvidia(nvidia)
-        rocm = self.which("rocm-smi")
+        rocm = self._tool("rocm-smi")
         if rocm:
-            return self._rocm(rocm)
-        return {"reason": "No NVIDIA or AMD GPU command was found on PATH."}
+            result = self._rocm(rocm)
+            if "reason" in result and self._inside_wsl():
+                return {"reason": "AMD GPU readings are not visible inside WSL (rocm-smi needs the Linux amdgpu driver)."}
+            return result
+        return {"reason": "No NVIDIA or AMD GPU command was found."}
 
     def _gpu(self) -> dict:
         now = self.clock()
