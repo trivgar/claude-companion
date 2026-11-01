@@ -50,8 +50,8 @@ context is, the git branch, and its last reply. A session that is waiting on
 you says so. Set a context line to flag a top-level session that needs
 `/clear` and receive one push notification on each crossing. Background Bash
 jobs show their command and age, and stale orphan snapshot shells are reaped
-after a configurable delay. At the top, your 5-hour and 7-day spend and your
-real limits.
+after a configurable delay. At the top, your 5-hour and 7-day spend, real
+Claude limits, and, when local Codex rollout logs exist, Codex plan limits.
 
 **Restore.** A small local snapshot records each tmux-backed session every few
 minutes. After a reboot or crash, the Sessions tab lists missing sessions and
@@ -358,6 +358,7 @@ hooks run outside any server's process.
 | `contact` | `mailto:` address push services can reach you at |
 | `icons` | A module with `icon_data(tag, title)` and `icon_for(tag, title)` for each push's picture (optional) |
 | `archive_roots` | Old transcript trees to count in the lifetime total (a list; `:`-separated in the environment) |
+| `codex_home` | Codex home to read local rollout logs from; default `~/.codex`, and absent logs keep the Codex strip off |
 | `tts_dir` | Directory containing an executable speech coordinator `speak.sh`; optional and compatible with AgentVibes-style coordinators |
 | `job_reaper_after_min` | Age before an orphaned background snapshot shell is terminated; default 60 |
 | `job_reaper_every_min` | Reaper interval in minutes; default 10, and 0 turns it off |

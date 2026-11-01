@@ -245,12 +245,19 @@
   }
 
   function strip(u) {
-    const f = u.five_hour || {}, s = u.seven_day || {}, l = u.limits || {};
+    const f = u.five_hour || {}, s = u.seven_day || {}, l = u.limits || {}, c = u.codex || {};
     const bits = [`5h ${money(f.cost_usd)}`, `7d ${money(s.cost_usd)}`];
     if (l.available) {
       const w = (k, label) => l[k] && l[k].utilization != null ? `${label} ${Math.round(l[k].utilization)}% used` : '';
       bits.push(...[w('five_hour', '5h limit'), w('seven_day', '7d limit')].filter(Boolean));
     } else if (l.reason) bits.push(`limits: ${l.reason}`);
+    if (c.enabled && c.available) {
+      const codex = [
+        c.five_hour && c.five_hour.utilization != null ? `5h ${Math.round(c.five_hour.utilization)}%` : '',
+        c.week && c.week.utilization != null ? `wk ${Math.round(c.week.utilization)}%` : '',
+      ].filter(Boolean);
+      if (codex.length) bits.push(`Codex ${codex.join(' · ')}${c.age_seconds != null ? ` (as of ${ago(c.age_seconds)})` : ''}`);
+    } else if (c.enabled && c.reason) bits.push(`Codex: ${c.reason}`);
     document.getElementById('strip').textContent = bits.join(' | ');
   }
 

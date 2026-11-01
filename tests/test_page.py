@@ -26,7 +26,9 @@ ROWS = [
      "unread": True, "last_reply_at": 100},
 ]
 USAGE = {"five_hour": {"cost_usd": 1.5, "total_tokens": 1000}, "seven_day": {"cost_usd": 20, "total_tokens": 9000},
-         "limits": {"available": False, "reason": "no credentials"}}
+         "limits": {"available": False, "reason": "no credentials"},
+         "codex": {"enabled": True, "available": True, "age_seconds": 720,
+                   "five_hour": {"utilization": 41}, "week": {"utilization": 19}}}
 
 
 @pytest.fixture(scope="module")
@@ -113,6 +115,7 @@ def test_the_strip_shows_spend(page):
     page.wait_for_function("document.getElementById('strip').textContent.includes('$')")
     t = page.locator("#strip").inner_text()
     assert "$1.50" in t and "$20.00" in t
+    assert "Codex 5h 41% · wk 19% (as of 12m ago)" in t
 
 
 def test_a_failed_read_says_the_servers_reason(page):
