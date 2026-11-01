@@ -75,6 +75,10 @@ app_name = "Companion"
 # [approval_lines]
 # Alex = ["{you}, need your OK"]
 
+# Extra design documents for the Specs tab. These globs are relative to each
+# project root. A path containing "plan" is shown as a plan; other matches are specs.
+# spec_globs = ["docs/design/*.md"]
+
 # The project folders the dashboard may act in: the Files tab browses and
 # edits only these, and New session starts Claude only in these.
 # [projects]
