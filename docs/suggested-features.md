@@ -78,3 +78,42 @@ Ask your Claude to keep it safe and understandable:
 Test the pace calculation around a reset, an expired override, missing and
 malformed data, over-pace usage, and each protected versus ordinary tool. The
 hook should always leave unrelated tool calls alone.
+
+## Spend routing
+
+**Goal:** Save a Claude plan for design, review, and the jobs that need it by
+giving routine implementation work to another plan's unattended CLI first.
+
+Why: people who pay for Claude, ChatGPT with Codex, or Gemini with its CLI may
+have useful capacity outside Claude. Build-to-a-plan and test-fixing jobs are
+often well suited to a single headless worker. Keep review with a strong model,
+then use Claude subagents last, so the Claude week lasts longer.
+
+Ask your Claude to build a small `delegate` wrapper like this:
+
+1. Accept `delegate [--to auto|codex|gemini-model] [--dir <worktree>] "job"`.
+   Run one job, headless and unattended, in the selected Git worktree. `auto`
+   should choose an ordered list of plans and try the next one only after a
+   recognizable quota error.
+2. Refuse a directory that is not a Git checkout or worktree, the repository's
+   main checkout, and repositories marked private in local configuration. Never
+   send prompts, source, credentials, or other private data to another
+   company's cloud. Let the owner decide which repositories may be delegated.
+3. Make workers unable to push, and tell them they are builders, not mergers.
+   Log the requested target, start time, result, and non-sensitive output for
+   each job. Add `delegate --usage` to count recent jobs per plan for the week.
+4. Add a `PreToolUse` hook that reminds the session to delegate before starting
+   a Claude subagent when another plan may fit. The hook must only remind, never
+   block, and must leave the final decision with the session owner.
+5. Give every wait a finite escape hatch. A worker instructed to wait for a
+   service, test, or other event can time out; it needs a way to continue, stop
+   safely, or return useful partial results.
+6. Require the main session to review the worker's diff, run any required
+   checks, and decide whether to commit. A worker's sandbox may not be able to
+   run the application's route or browser tests, so the session runs those.
+
+Test argument parsing, target selection after fake quota failures, refusal of
+the main checkout and private targets, push prevention, logging, weekly usage
+counts, and the reminder hook. Use fixture repositories and fake CLIs. Do not
+send a real prompt, invoke a real plan, or require a browser to test the
+wrapper.
