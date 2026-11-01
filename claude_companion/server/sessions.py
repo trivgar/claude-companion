@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from .. import bgjobs, clearline, config
+from .. import bgjobs, clearline, codex_limits, config
 from ..gitstate import GitState
 from ..limits import LimitsCache
 from ..reader import SessionReader, order
@@ -99,6 +99,10 @@ def usage():
         out["limits"] = p["limits"].get()
     except Exception as exc:
         out["limits"] = {"available": False, "reason": type(exc).__name__}
+    try:
+        out["codex"] = codex_limits.read()
+    except Exception:
+        out["codex"] = {"enabled": False}
     return out
 
 

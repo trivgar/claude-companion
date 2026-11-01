@@ -16,6 +16,7 @@ app_name = "Companion"
 
 # Where your sessions live and where the app keeps its own files
 # claude_home = "~/.claude"
+# codex_home = "~/.codex"      # optional: show Codex plan limits from local rollout logs
 # data_dir = "~/.local/share/claude-companion"
 
 # Shared deferred work and cross-project handoffs.  The default file is
