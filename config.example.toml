@@ -41,6 +41,14 @@ app_name = "Companion"
 # A top-level session at this many context tokens says "needs /clear".
 # clear_line = 400000
 
+# Local Machine tab: `/` is always shown. Add mounted paths when useful on
+# your system, for example a Windows drive from WSL. Pushes are off by default.
+# health_disks = ["/mnt/c"]
+# health_hot_c = 85
+# health_disk_full_pct = 90
+# health_mem_full_pct = 92
+# health_push = false
+
 # Reap an orphaned run_in_background shell after this age.  The scan runs
 # every 10 minutes by default; set job_reaper_every_min = 0 to turn it off.
 # job_reaper_after_min = 60
