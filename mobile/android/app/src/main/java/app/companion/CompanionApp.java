@@ -30,13 +30,33 @@ final class CompanionApp {
         return u.getScheme() + "://" + u.getAuthority();
     }
 
+    // The owner key the page was paired with (pair.js keeps it in the WebView's
+    // localStorage as cc-owner-key); MainActivity copies it here on every page
+    // load, so calls made with no page open (a push, background playback, an
+    // update check) carry it too. Issue #1.
+    private static final String PREFS = "companion";
+    private static final String OWNER_KEY = "owner_key";
+    static final String OWNER_HEADER = "x-agent-companion-key";
+
+    static String ownerKey(Context c) {
+        return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(OWNER_KEY, "");
+    }
+
+    // True when the key changed. Only a plausible key is kept: the value comes
+    // from page script.
+    static boolean setOwnerKey(Context c, String key) {
+        if (key == null || !key.matches("[A-Za-z0-9_\\-]{16,200}") || key.equals(ownerKey(c))) return false;
+        c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(OWNER_KEY, key).apply();
+        return true;
+    }
+
     static void register(Context c, String token) {
         final Context app = c.getApplicationContext();
         new Thread(() -> {
             try {
                 // notify: this build draws CompanionApp's notifications (Notifier).
                 JSONObject body = new JSONObject().put("token", token).put("notify", true).put("ring", true);
-                int code = post(app, "/api/tts/app", body.toString(), true);
+                int code = post(app, "/api/tts/app", body.toString());
                 Log.i(TAG, "registered for comms: " + code);
             } catch (Exception e) {
                 Log.w(TAG, "register: " + e);
@@ -48,15 +68,20 @@ final class CompanionApp {
         HttpURLConnection h = (HttpURLConnection) new URL(base(c) + path).openConnection();
         h.setConnectTimeout(timeoutMs);
         h.setReadTimeout(timeoutMs);
+        // Every app route is an owner route: reads want the key (require_token).
+        String k = ownerKey(c);
+        if (!k.isEmpty()) h.setRequestProperty(OWNER_HEADER, k);
         return h;
     }
 
-    static int post(Context c, String path, String json, boolean withKey) throws Exception {
+    static int post(Context c, String path, String json) throws Exception {
         HttpURLConnection h = open(c, path, 10000);
         try {
             h.setRequestMethod("POST");
             h.setDoOutput(true);
             h.setRequestProperty("Content-Type", "application/json");
+            // Writes want the dashboard's own origin as well (require_write).
+            h.setRequestProperty("Origin", base(c));
             try (OutputStream o = h.getOutputStream()) {
                 o.write(json.getBytes(StandardCharsets.UTF_8));
             }

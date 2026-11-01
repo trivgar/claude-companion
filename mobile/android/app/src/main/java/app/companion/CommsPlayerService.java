@@ -285,7 +285,7 @@ public class CommsPlayerService extends Service {
         for (int i = 0; i < 3; i++) {
             try {
                 JSONObject b = new JSONObject().put("seq", seq).put("result", result).put("detail", detail);
-                int code = CompanionApp.post(this, "/api/tts/played", b.toString(), false);
+                int code = CompanionApp.post(this, "/api/tts/played", b.toString());
                 if (code == 200 || code == 404) return;
             } catch (Exception e) {
                 Log.w(CompanionApp.TAG, "answer #" + seq + ": " + e);

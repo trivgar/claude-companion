@@ -297,10 +297,10 @@ cd android
 
 The APK is at `mobile/android/app/build/outputs/apk/debug/app-debug.apk`.
 
-**Known issue:** the Android app's native background features, including
-push-delivered comms, clip playback, and update checks, do not yet send the
-paired owner key and will be refused. For now, use the web app in the phone
-browser or the app's foreground WebView.
+Pair the app, then open it once: each time a page loads, the app keeps a copy
+of the paired key for its background features (push-delivered comms, clip
+playback, update checks), which run with no page open. Pairing again replaces
+it.
 
 ### Merge queue and collaboration notes
 
