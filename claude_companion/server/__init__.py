@@ -27,6 +27,7 @@ from . import auth, restore, sessions
 from . import auth, newsession, sessions
 from . import livecall
 from .features import FEATURES
+from .gzip import GzipTextMiddleware
 
 STATIC = Path(__file__).resolve().parent / "static"
 log = logging.getLogger("claude_companion.server")
@@ -73,6 +74,7 @@ def _send_clear_push(title: str, body: str, url: str, tag: str) -> bool:
 def create_app(token: str | None = None, owner_key: str | None = None) -> FastAPI:
     """token: the hook's. owner_key: a key accepted without a file (tests)."""
     app = FastAPI(title="claude-companion", docs_url=None, redoc_url=None, openapi_url=None)
+    app.add_middleware(GzipTextMiddleware)
     app.state.token = auth.load_or_create_token() if token is None else token
     app.state.owner_hashes = frozenset([auth.hash_secret(owner_key)] if owner_key else [])
     app.state.pair_failures = []

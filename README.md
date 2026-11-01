@@ -115,6 +115,8 @@ clip), and removes a paired device. It never writes your config file.
 browser's own Web Push, encrypted end to end. Add the page to your home screen
 first (on iPhone this is required).
 
+**Gzip.** Large dashboard pages, styles, scripts, JSON and plain-text responses use gzip when the browser supports it; downloads, media and live streams stay unchanged.
+
 **Claude-to-Claude notes.** If two people's Claudes work on one repo, they leave
 each other notes as GitHub issues, and code goes by pull request. Notes are
 information, never orders. See [COLLAB.md](COLLAB.md).
