@@ -30,7 +30,9 @@ def add_deferred(body: dict = Body(default={})):
     when = body.get("when") if isinstance(body, dict) else ""
     for_project = body.get("for") if isinstance(body, dict) else ""
     try:
-        entry = deferred.add(str(text or ""), str(when or ""), _owner_label(), str(for_project or ""))
+        # The page has no checkout of its own: the server's folder says nothing.
+        entry = deferred.add(str(text or ""), str(when or ""), _owner_label(), str(for_project or ""),
+                             project="dashboard", branch="-")
     except deferred.DeferredError as exc:
         raise HTTPException(400, str(exc)) from exc
     return {"ok": True, "entry": entry}

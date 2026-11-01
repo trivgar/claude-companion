@@ -229,8 +229,10 @@ def _append_entry(text: str, entry: dict) -> str:
 
 def add(text: str, when: str = "", by: str = "", for_project: str = "",
         path: Path | None = None, cwd: str | os.PathLike[str] | None = None,
-        now: datetime | None = None) -> dict:
-    """Append one deferred item while holding the file lock."""
+        now: datetime | None = None, project: str | None = None,
+        branch: str | None = None) -> dict:
+    """Append one deferred item while holding the file lock. ``project`` and
+    ``branch`` default to the git checkout at ``cwd``."""
     text = _one_line(text, MAX_TEXT)
     when = _one_line(when, MAX_SHORT_TEXT)
     by = _one_line(by, 120) or "owner"
@@ -238,7 +240,8 @@ def add(text: str, when: str = "", by: str = "", for_project: str = "",
     if not text:
         raise DeferredError("nothing to add")
     target = file_path(path)
-    project, branch = project_of(cwd), branch_of(cwd)
+    project = _one_line(project, 120) if project else project_of(cwd)
+    branch = _one_line(branch, 120) if branch else branch_of(cwd)
     entry = {"timestamp": _timestamp(now), "project": project, "branch": branch, "by": by,
              "when": when, "for": for_project, "state": "open", "ask": text, "answer": ""}
     entry["header"] = _entry_title(project, branch, text)
